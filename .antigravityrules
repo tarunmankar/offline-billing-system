@@ -14,6 +14,8 @@ The single source of truth for the entire application is consolidated within the
 * **Design & Screen Maps:** `/.ai/PROJECT_BLUEPRINT.md` (Component hierarchy, CSS design standards, active screens layout)
 * **Execution Roadmap:** `/.ai/TASKS.md` (Tick list of development checkpoints)
 * **Diagnostic Memory Bank:** `/.ai/ERROR_LOGS.md` (Failsafe historical resolutions ledger)
+* **Workflow & Git Guide:** `/.ai/PROJECT_WORKFLOW_CHECKLIST.md` (Halt & Ask rules, testing protocols, git safety controls)
+
 
 ---
 
