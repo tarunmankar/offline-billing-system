@@ -23,6 +23,7 @@ The master specifications, design constraints, and technical directives are trac
 * **🗺️ [PROJECT_BLUEPRINT.md](.ai/PROJECT_BLUEPRINT.md) (Folder & Screens Map):** Complete project file layout blueprints and React view component descriptions.
 * **📋 [TASKS.md](.ai/TASKS.md) (Interactive Roadmap):** Tick list of development progress checkpoints and next-up tasks.
 * **🐛 [ERROR_LOGS.md](.ai/ERROR_LOGS.md) (Diagnostic Memory Bank):** Resolved historical anomalies ledger.
+* **📝 [PROJECT_WORKFLOW_CHECKLIST.md](.ai/PROJECT_WORKFLOW_CHECKLIST.md) (Workflow & Git Guide):** Strict Halt & Ask rules, testing protocols, and manual Git controls.
 
 ---
 
