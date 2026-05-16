@@ -6,7 +6,7 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
+    react({ fastRefresh: false }),
     tailwindcss(),
   ],
   base: './',
@@ -16,7 +16,10 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: 4000,
+  },
+  optimizeDeps: {
+    exclude: ['lucide-react', '@tailwindcss/oxide'],
   },
   build: {
     outDir: 'dist',

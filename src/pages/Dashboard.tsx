@@ -1,3 +1,4 @@
+// Client-side HMR cache invalidation trace
 import React from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { LayoutDashboard, ShoppingCart, Package, Users, Settings } from 'lucide-react';

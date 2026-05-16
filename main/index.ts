@@ -68,11 +68,21 @@ app.on('window-all-closed', () => {
 
 // IPC Handlers for Config
 ipcMain.handle('get-config', () => {
-  const configPath = path.join(process.cwd(), 'config.json');
-  if (fs.existsSync(configPath)) {
-    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  }
-  return {};
+  const { ConfigManager } = require('./managers/ConfigManager');
+  const manager = new ConfigManager();
+  return manager.getConfig();
+});
+
+ipcMain.handle('update-config', (_, config) => {
+  const { ConfigManager } = require('./managers/ConfigManager');
+  const manager = new ConfigManager();
+  return manager.saveConfig(config);
+});
+
+// --- AUTHENTICATION HANDLERS ---
+ipcMain.handle('auth:login', (_, { username, password }) => {
+  const { AuthManager } = require('./managers/AuthManager');
+  return AuthManager.login(username, password);
 });
 
 // --- DB HANDLERS ---

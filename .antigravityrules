@@ -1,0 +1,54 @@
+# **⚡ .antigravityrules: Persistent AI Context & Core Directives**
+
+This persistent configuration file governs the automated behaviors, technical constraints, and context mapping for all AI Agent interactions within the **Offline Billing System**.
+
+---
+
+## **1. Master Context Resolution Path**
+The single source of truth for the entire application is consolidated within the `.ai/` AI Brain Folder. Before creating files, writing logic, or altering data, the active agent must load and cross-reference:
+* **Product Requirements:** `/.ai/00_PRD.md` (Master specifications, personas, core modules)
+* **Wiring & IPC Routing:** `/.ai/ARCHITECTURE_MASTER.md` (Process isolation, contexts, IPC bridge mappings)
+* **Local Schema Specs:** `/.ai/SCHEMA.md` (SQLite relational DDL, WAL configuration, JSON attributes)
+* **Agent Constitutional Laws:** `/.ai/AGENTS.md` (Developer behavior overrides, non-negotiables)
+* **Tooling Overrides:** `/.ai/GEMINI.md` (Electron + React compilation, preview server hooks, CLI guidelines)
+* **Design & Screen Maps:** `/.ai/PROJECT_BLUEPRINT.md` (Component hierarchy, CSS design standards, active screens layout)
+* **Execution Roadmap:** `/.ai/TASKS.md` (Tick list of development checkpoints)
+* **Diagnostic Memory Bank:** `/.ai/ERROR_LOGS.md` (Failsafe historical resolutions ledger)
+
+---
+
+## **2. Non-Negotiable Engineering Laws**
+
+### **A. 100% Offline Integrity**
+* **Commandment:** The application must compile, execute, and operate with zero network adapters active.
+* **Prohibited:** Absolute restriction on dynamic CDN stylesheets, remote fonts, analytic tracking scripts, and remote API queries. All dependencies must live locally inside `node_modules`.
+
+### **B. Pure Config-Driven Design**
+* **Commandment:** The app is a dynamic shell. Never hardcode colors, labels, currencies, column names, or feature availability.
+* **Mechanism:** Retrieve settings dynamically from the system's `config.json`. Provide bulletproof fallback controls reading `default_config.json` if configuration errors arise.
+
+### **C. Hardened Process Sandboxing**
+* **Commandment:** Maintain physical segregation between the Node.js backend (Main Process) and browser interface (Renderer Process).
+* **Isolation:** The frontend has zero access to Node.js modules or native drivers.
+* **Communication:** All operations flow through vetted IPC channels mapped securely inside `main/preload.js` and exposed on the DOM via `window.electronAPI`. No raw SQL strings or arbitrary commands may traverse the boundary.
+
+### **D. Atomic SQL Transactions**
+* **Commandment:** Always execute database writes inside structured, atomic transaction boundaries (`db.transaction()`) using `better-sqlite3`.
+* **Reliability:** Protect user database records from power outages and file locks. Enable Write-Ahead Logging (`WAL` mode) on connection setup.
+
+### **E. Premium Kinetic Aesthetic**
+* **Commandment:** All user interfaces must look state-of-the-art and visually outstanding.
+* **Styling:** Use Tailwind CSS to establish rich dark mode interfaces using glassmorphism borders and custom HSL colors.
+* **Feel:** Integrate fluid, spring-physics-based UI transitions using Framer Motion.
+
+---
+
+## **3. Code Style & Review Checklist**
+* [ ] No `any` declarations in TypeScript main files.
+* [ ] UI elements must dynamically check feature switches before mounting.
+* [ ] Form fields must dynamically adapt to `config.custom_fields` layouts.
+* [ ] Standard error outputs must be captured in `logs/main.log`.
+* [ ] Always verify `TASKS.md` checklists before closing an active cycle.
+
+---
+*Rules Version: 1.0.0 | Active Persistence Enabled*

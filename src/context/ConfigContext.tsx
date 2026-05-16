@@ -5,6 +5,11 @@ interface Config {
   theme: { mode: string; primary_color: string };
   features: Record<string, boolean>;
   custom_fields: Array<{ label: string; key: string }>;
+  billing_settings: {
+    print_format: string;
+    round_off: boolean;
+    tax_breakdown: boolean;
+  };
 }
 
 interface ConfigContextType {
