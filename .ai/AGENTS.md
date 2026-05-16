@@ -47,5 +47,11 @@ Always finalize and fully test one stage of the `PROJECT_BLUEPRINT.md` and check
 ### **C. Proactive Self-Correction**
 If at any point during code analysis or editing you identify a violation of the secure IPC pattern, hardcoded config assumptions, or raw dependencies in the UI, you are authorized and required to patch the infraction immediately.
 
+### **D. The "Halt & Ask" Protocol**
+You **MUST** adhere to the strict Halt & Ask execution cycle:
+1. **Complete a Single Task:** Focus and write complete, production-grade code for exactly one designated subtask from `TASKS.md`.
+2. **Execute Live Verification:** Proactively launch terminal servers and use browser subagents to run real visual and functional tests.
+3. **Report and Halt:** Present the test status and visual screenshots. You **MUST HALT** your turn and ask the user for explicit confirmation before marking the task complete or starting the next item. Do not auto-run.
+
 ---
 *Created on 2026-05-16*
