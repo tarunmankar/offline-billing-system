@@ -1,0 +1,11 @@
+node_modules
+dist
+dist-electron
+*.db
+*.db-journal
+*.db-wal
+.DS_Store
+.env
+logs/
+bin/
+out/

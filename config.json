@@ -1,0 +1,29 @@
+{
+  "shop_info": {
+    "name": "Billing Pro 2026",
+    "type": "pharmacy",
+    "tax_label": "GST/VAT",
+    "logo_path": "assets/logo.png"
+  },
+  "theme": {
+    "mode": "dark",
+    "primary_color": "#2563eb"
+  },
+  "features": {
+    "user_auth": true,
+    "barcode_scanner": true,
+    "expiry_tracking": true,
+    "thermal_printing": true,
+    "inventory_management": true,
+    "credit_ledger": true
+  },
+  "custom_fields": [
+    { "label": "Batch No", "key": "batch" },
+    { "label": "Expiry Date", "key": "expiry" }
+  ],
+  "billing_settings": {
+    "print_format": "A4",
+    "round_off": true,
+    "tax_breakdown": true
+  }
+}
