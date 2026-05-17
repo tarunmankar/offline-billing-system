@@ -55,6 +55,10 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
+  // Initialize Print Manager IPC Handlers
+  const { PrintManager } = require('./managers/PrintManager');
+  PrintManager.init();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
