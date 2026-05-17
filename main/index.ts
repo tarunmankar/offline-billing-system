@@ -59,6 +59,10 @@ app.whenReady().then(() => {
   const { PrintManager } = require('./managers/PrintManager');
   PrintManager.init();
 
+  // Initialize Backup Manager IPC Handlers
+  const { BackupManager } = require('./managers/BackupManager');
+  BackupManager.init();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
