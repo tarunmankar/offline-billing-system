@@ -7,13 +7,13 @@ import { Lock, User, Eye, EyeOff, Activity, ShoppingCart, Sparkles, ShieldAlert 
 const Login: React.FC = () => {
   const { login } = useAuth();
   const { config } = useConfig();
-  
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const usernameRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus username field on mount
@@ -47,9 +47,9 @@ const Login: React.FC = () => {
 
   // Dynamically select shop type icon for premium feel
   const renderShopIcon = () => {
-    const type = config?.shop_info.type?.toLowerCase();
+    const type = config?.shop_info?.type?.toLowerCase();
     const style = { color: 'var(--primary, #2563eb)' };
-    
+
     if (type === 'pharmacy' || type === 'medical') {
       return <Activity className="w-10 h-10 animate-pulse" style={style} />;
     }
@@ -63,7 +63,7 @@ const Login: React.FC = () => {
       <div className="absolute bottom-1/4 right-1/4 -z-10 h-96 w-96 rounded-full bg-emerald-600/10 blur-[120px] transition-all duration-1000"></div>
 
       {/* Main Glassmorphic Login Card container */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -71,7 +71,7 @@ const Login: React.FC = () => {
       >
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.8, rotate: -10 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
@@ -79,31 +79,31 @@ const Login: React.FC = () => {
           >
             {renderShopIcon()}
           </motion.div>
-          
-          <motion.h2 
+
+          <motion.h2
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="mt-5 text-2xl font-bold tracking-tight text-white"
           >
-            {config?.shop_info.name || 'Billing Pro 2026'}
+            {config?.shop_info?.name || 'Billing Pro 2026'}
           </motion.h2>
-          
-          <motion.p 
+
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
             className="mt-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-slate-400"
           >
             <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--primary, #2563eb)' }} />
-            {config?.shop_info.type || 'RETAIL TERMINAL'} OPERATOR BOOT
+            {config?.shop_info?.type || 'RETAIL TERMINAL'} OPERATOR BOOT
           </motion.p>
         </div>
 
         {/* Dynamic validation error display */}
         <AnimatePresence mode="wait">
           {error && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, height: 0, y: -10 }}
               animate={{ opacity: 1, height: 'auto', y: 0 }}
               exit={{ opacity: 0, height: 0, y: -10 }}
