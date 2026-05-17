@@ -4,6 +4,30 @@ import { useAuth } from '../context/AuthContext';
 import { ShoppingCart, Search, Plus, Minus, Trash2, CheckCircle } from 'lucide-react';
 import { generateReceiptHtml } from '../utils/printTemplates';
 
+// Helper function to dynamically highlight matching search query substrings case-insensitively
+const renderHighlightedText = (text: string, query: string) => {
+  if (!query.trim()) return <span>{text}</span>;
+  
+  // Escape special regex characters to prevent runtime pattern compile crashes
+  const escapedQuery = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const regex = new RegExp(`(${escapedQuery})`, 'gi');
+  const parts = text.split(regex);
+  
+  return (
+    <span>
+      {parts.map((part, index) => 
+        regex.test(part) ? (
+          <span key={index} className="text-[#3b82f6] font-extrabold underline decoration-[#3b82f6]/40 bg-blue-500/10 px-0.5 rounded">
+            {part}
+          </span>
+        ) : (
+          <span key={index}>{part}</span>
+        )
+      )}
+    </span>
+  );
+};
+
 export default function Billing() {
   const { config } = useConfig();
   const { user } = useAuth();
@@ -294,9 +318,11 @@ export default function Billing() {
                     }`}
                   >
                     <div>
-                      <div className="font-semibold text-sm">{p.name}</div>
+                      <div className="font-semibold text-sm">
+                        {renderHighlightedText(p.name, barcodeInput)}
+                      </div>
                       <div className="text-xs text-slate-400 mt-1 font-mono">
-                        Code: {p.barcode} | Stock: <span className={p.stock <= 5 ? 'text-amber-400 font-bold' : ''}>{p.stock}</span>
+                        Code: {renderHighlightedText(p.barcode, barcodeInput)} | Stock: <span className={p.stock <= 5 ? 'text-amber-400 font-bold' : ''}>{p.stock}</span>
                       </div>
                     </div>
                     <div className="font-mono font-bold text-sm text-[var(--primary)]">₹{Number(p.price).toFixed(2)}</div>
