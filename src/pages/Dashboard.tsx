@@ -1,22 +1,95 @@
 import React, { useState } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings as SettingsIcon, LogOut, Shield, BookOpen } from 'lucide-react';
-import DynamicForm from '../components/DynamicForm';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  LayoutDashboard, ShoppingCart, Package, Users,
+  Settings as SettingsIcon, LogOut, Shield, BookOpen,
+  TrendingUp, IndianRupee, ShoppingBag, WifiOff, ChevronRight, Zap, Bell,
+  Receipt
+} from 'lucide-react';
 import Inventory from './Inventory';
 import Billing from './Billing';
 import SalesLedger from './SalesLedger';
 import ExpiryAlert from '../components/ExpiryAlert';
 import Settings from './Settings';
+import Expenses from './Expenses';
+import DayBook from './DayBook';
+
+type TabType = 'dashboard' | 'new-bill' | 'inventory' | 'settings' | 'users' | 'ledger' | 'expenses' | 'daybook';
+
+/* ── Inline Style Constants ─────────────────────────────── */
+const S = {
+  sidebar: {
+    width: 256, background: 'var(--sidebar-bg)',
+    borderRight: '1px solid var(--border-subtle)',
+    display: 'flex', flexDirection: 'column' as const,
+    flexShrink: 0, height: '100vh',
+  },
+  sidebarBrand: {
+    padding: '28px 24px 24px',
+    borderBottom: '1px solid var(--border-subtle)',
+    display: 'flex', alignItems: 'center', gap: 14,
+  },
+  sidebarBrandIcon: {
+    width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'var(--primary-subtle)', border: '1px solid var(--border-glow)',
+  },
+  nav: { flex: 1, padding: '20px 16px', overflowY: 'auto' as const },
+  navGroup: { marginBottom: 24 },
+  navGroupLabel: {
+    fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const,
+    letterSpacing: '0.1em', color: 'var(--text-muted)',
+    padding: '0 12px', marginBottom: 8, display: 'block',
+  },
+  navItem: (active: boolean): React.CSSProperties => ({
+    display: 'flex', alignItems: 'center', gap: 14,
+    padding: '13px 16px', borderRadius: 12, fontSize: 14,
+    fontWeight: active ? 600 : 500, width: '100%', textAlign: 'left',
+    cursor: 'pointer', border: '1px solid transparent',
+    marginBottom: 4, transition: 'all 0.18s ease',
+    background: active ? 'var(--nav-active-bg)' : 'transparent',
+    color: active ? 'var(--primary)' : 'var(--text-secondary)',
+    borderColor: active ? 'var(--nav-active-border)' : 'transparent',
+    boxShadow: active ? 'inset 3px 0 0 var(--primary)' : 'none',
+  }),
+  userChip: {
+    display: 'flex', alignItems: 'center', gap: 12,
+    padding: '14px 16px', borderRadius: 14, marginBottom: 8,
+    background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)',
+  },
+  userAvatar: {
+    width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'var(--primary)', color: '#fff',
+    fontWeight: 700, fontSize: 16,
+  },
+  header: {
+    padding: '20px 40px', borderBottom: '1px solid var(--border-subtle)',
+    background: 'var(--bg-surface)', display: 'flex',
+    alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+  },
+  content: { flex: 1, overflowY: 'auto' as const, padding: '36px 40px' },
+  statCard: {
+    position: 'relative' as const, overflow: 'hidden',
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: 20, padding: '28px 28px 24px',
+    cursor: 'default', transition: 'all 0.3s ease',
+  },
+  card: {
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: 20, overflow: 'hidden',
+  },
+};
 
 const Dashboard: React.FC = () => {
   const { config, loading: configLoading } = useConfig();
   const { user, logout } = useAuth();
-  
-  const [currentTab, setCurrentTab] = useState<'dashboard' | 'new-bill' | 'inventory' | 'settings' | 'users' | 'ledger'>('dashboard');
-  const [formValues, setFormValues] = useState<Record<string, string | number>>({});
-  const [stats, setStats] = useState({ salesToday: 0, itemsSold: 0 });
-
+  const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
+  const [stats, setStats] = useState({ salesToday: 0, itemsSold: 0, transactions: 0 });
   const isAdmin = user?.role === 'Admin';
 
   React.useEffect(() => {
@@ -25,214 +98,265 @@ const Dashboard: React.FC = () => {
         const sales = await (window as any).electronAPI.getSales();
         const today = new Date().toDateString();
         const todaysSales = sales.filter((s: any) => new Date(s.date).toDateString() === today);
-        
-        const totalAmount = todaysSales.reduce((sum: number, s: any) => sum + Number(s.total_amount), 0);
-        const totalItems = todaysSales.reduce((sum: number, s: any) => sum + Number(s.items_count), 0);
-        
-        setStats({ salesToday: totalAmount, itemsSold: totalItems });
+        setStats({
+          salesToday: todaysSales.reduce((sum: number, s: any) => sum + Number(s.total_amount), 0),
+          itemsSold:  todaysSales.reduce((sum: number, s: any) => sum + Number(s.items_count), 0),
+          transactions: todaysSales.length,
+        });
       }
     };
     fetchStats();
   }, [currentTab]);
 
   if (configLoading) {
-    return <div className="flex h-screen items-center justify-center text-white bg-slate-950">Loading config...</div>;
+    return (
+      <div style={{ display: 'flex', height: '100vh', width: '100vw', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--border-subtle)', borderTopColor: 'var(--primary)', animation: 'spin 1s linear infinite' }} />
+          <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)' }}>Initializing...</span>
+        </div>
+      </div>
+    );
   }
+
+  const navGroups = [
+    {
+      label: 'Main',
+      items: [
+        { id: 'dashboard' as TabType, icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
+        { id: 'ledger'    as TabType, icon: <BookOpen size={18} />,        label: 'Sales Ledger' },
+        ...(config?.features.barcode_scanner !== false
+          ? [{ id: 'new-bill'  as TabType, icon: <ShoppingCart size={18} />, label: 'New Bill' }] : []),
+        ...(config?.features.inventory_management
+          ? [{ id: 'inventory' as TabType, icon: <Package size={18} />, label: 'Inventory' }] : []),
+        { id: 'expenses'  as TabType, icon: <IndianRupee size={18} />,     label: 'Daily Expenses' },
+        { id: 'daybook'   as TabType, icon: <Receipt size={18} />,         label: 'Day Book' },
+      ],
+    },
+    ...(isAdmin ? [{
+      label: 'Admin',
+      items: [
+        ...(config?.features.user_auth ? [{ id: 'users' as TabType, icon: <Users size={18} />, label: 'Users' }] : []),
+        { id: 'settings' as TabType, icon: <SettingsIcon size={18} />, label: 'Settings' },
+      ],
+    }] : []),
+  ];
 
   const renderContent = () => {
     switch (currentTab) {
-      case 'inventory':
-        return <Inventory />;
-      case 'new-bill':
-        return <Billing />;
-      case 'settings':
-        return <Settings />;
-      case 'ledger':
-        return <SalesLedger />;
+      case 'inventory': return <Inventory />;
+      case 'new-bill':  return <Billing />;
+      case 'settings':  return <Settings />;
+      case 'ledger':    return <SalesLedger />;
+      case 'expenses':  return <Expenses />;
+      case 'daybook':   return <DayBook />;
       case 'users':
         return (
-          <div className="theme-card-solid border rounded-xl p-8 shadow-lg transition-theme text-center max-w-2xl mx-auto mt-10">
-            <Users className="text-emerald-500 mx-auto mb-4 opacity-80" size={48} />
-            <h3 className="text-xl font-bold mb-2">User Authorization Panel</h3>
-            <p className="theme-text-secondary text-sm">Under development. Manage cashier roles, verify offline credentials, and define operational restrictions.</p>
-          </div>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            style={{ ...S.card, padding: '64px 48px', textAlign: 'center', maxWidth: 480, margin: '48px auto' }}>
+            <div style={{ width: 80, height: 80, borderRadius: 20, background: 'hsla(158,64%,52%,0.1)', border: '1px solid hsla(158,64%,52%,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+              <Users size={36} color="var(--accent-emerald)" />
+            </div>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>User Authorization Panel</h3>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>Manage cashier roles and offline credentials. Coming in Phase 6.</p>
+          </motion.div>
         );
-      case 'dashboard':
       default:
         return (
-          <>
-            {/* Dashboard Stat Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard title="Today's Sales" value={`₹ ${stats.salesToday.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`} change="Live" />
-              <StatCard title="Items Sold" value={stats.itemsSold.toString()} change="Live" />
-              <StatCard title="Active Customers" value="B2C" change="Walk-In" />
-            </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
 
-            {/* Active Shelf Alerts */}
-            <div className="mt-8">
-              <ExpiryAlert />
-            </div>
-
-            {/* Dynamic Config Context Check */}
-            <div className="mt-8 theme-card-solid border rounded-xl p-6 shadow-lg transition-theme">
-               <h3 className="text-lg font-bold mb-4 flex items-center gap-2 transition-theme">
-                 ⚙️ Dynamic Setup Check
-               </h3>
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 theme-input rounded-lg border transition-theme">
-                     <p className="text-xs theme-text-secondary opacity-80 font-semibold uppercase tracking-wider transition-theme">Tax Identifier</p>
-                     <p className="font-mono mt-1 font-bold transition-theme">{config?.shop_info.tax_label}</p>
-                  </div>
-                  <div className="p-4 theme-input rounded-lg border transition-theme">
-                     <p className="text-xs theme-text-secondary opacity-80 font-semibold uppercase tracking-wider transition-theme">Default Invoice Print Format</p>
-                     <p className="font-mono mt-1 font-bold transition-theme">{config?.billing_settings.print_format}</p>
-                  </div>
-               </div>
-            </div>
-
-            {/* Dynamic Form Preview */}
-            {config?.custom_fields && config.custom_fields.length > 0 && (
-              <div className="mt-8 mb-4">
-                <DynamicForm 
-                  fields={config.custom_fields as any}
-                  values={formValues}
-                  onChange={(key, value) => setFormValues(prev => ({ ...prev, [key]: value }))}
-                  title="Dynamic Config Fields (Preview)"
-                  description="These fields are instantly generated strictly from your config.json custom_fields array."
-                />
+            {/* Greeting Banner */}
+            <div style={{
+              borderRadius: 20, padding: '32px 36px', position: 'relative', overflow: 'hidden',
+              background: 'linear-gradient(135deg, var(--primary-subtle) 0%, hsla(262,80%,65%,0.06) 100%)',
+              border: '1px solid var(--border-glow)',
+            }}>
+              <div style={{ position: 'absolute', top: -48, right: -48, width: 220, height: 220, borderRadius: '50%', background: 'var(--primary-glow)', filter: 'blur(60px)', opacity: 0.6, pointerEvents: 'none' }} />
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Zap size={12} color="var(--primary)" />
+                    {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                  <h2 style={{ fontSize: 30, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: 10 }}>
+                    Welcome back, <span style={{ color: 'var(--primary)' }}>{user?.username || 'Operator'}</span> 👋
+                  </h2>
+                  <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    {config?.shop_info?.type ? config.shop_info.type.charAt(0).toUpperCase() + config.shop_info.type.slice(1) : 'Shop'} Terminal — All systems operational.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 600, padding: '10px 18px', borderRadius: 12, background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                  <WifiOff size={14} color="var(--accent-emerald)" />
+                  100% Offline
+                </div>
               </div>
-            )}
-          </>
+            </div>
+
+            {/* Stat Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+              <StatCard label="Today's Revenue" value={`₹${stats.salesToday.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                icon={<IndianRupee size={22} />} color="var(--primary)" glow="var(--primary-glow)" subtle="var(--primary-subtle)" badge="Live" />
+              <StatCard label="Items Sold" value={stats.itemsSold.toString()}
+                icon={<ShoppingBag size={22} />} color="var(--accent-emerald)" glow="hsla(158,64%,52%,0.3)" subtle="hsla(158,64%,52%,0.1)" badge="Today" />
+              <StatCard label="Transactions" value={stats.transactions.toString()}
+                icon={<TrendingUp size={22} />} color="var(--accent-purple)" glow="hsla(262,80%,65%,0.3)" subtle="hsla(262,80%,65%,0.1)" badge="Bills" />
+            </div>
+
+            {/* Alerts */}
+            <ExpiryAlert />
+
+            {/* Config */}
+            <div style={S.card}>
+              <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <SettingsIcon size={15} color="var(--primary)" />
+                <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)' }}>Active Configuration</span>
+              </div>
+              <div style={{ padding: '20px 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                {[
+                  { label: 'Tax Identifier',  value: config?.shop_info.tax_label },
+                  { label: 'Print Format',    value: config?.billing_settings.print_format },
+                  { label: 'Shop Type',       value: config?.shop_info.type },
+                  { label: 'Theme Mode',      value: config?.theme.mode },
+                ].map(item => (
+                  <div key={item.label} style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: '18px 20px' }}>
+                    <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 8 }}>{item.label}</p>
+                    <p style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', textTransform: 'capitalize' }}>{item.value || '—'}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </motion.div>
         );
     }
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden theme-bg font-sans transition-theme">
-      {/* Sidebar */}
-      <aside className="w-64 theme-sidebar border-r flex flex-col justify-between shrink-0 transition-theme">
-        <div>
-          {/* Shop Header */}
-          <div className="p-6 border-b theme-border transition-theme">
-            <h1 className="text-xl font-bold text-[var(--text-color)] tracking-tight truncate transition-theme">
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', background: 'var(--bg-base)' }}>
+
+      {/* ── SIDEBAR ── */}
+      <aside style={S.sidebar}>
+        {/* Brand */}
+        <div style={S.sidebarBrand}>
+          <div style={S.sidebarBrandIcon}>
+            <Zap size={20} color="var(--primary)" />
+          </div>
+          <div style={{ overflow: 'hidden' }}>
+            <h1 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3 }}>
               {config?.shop_info.name || 'Billing Pro'}
             </h1>
-            <p className="text-xs theme-text-secondary mt-1 uppercase tracking-widest font-semibold transition-theme">
+            <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 600, marginTop: 3 }}>
               {config?.shop_info.type}
             </p>
           </div>
-
-          {/* Navigation Items */}
-          <nav className="p-4 space-y-1.5">
-            <NavItem 
-              icon={<LayoutDashboard size={20} />} 
-              label="Dashboard" 
-              active={currentTab === 'dashboard'} 
-              onClick={() => setCurrentTab('dashboard')}
-            />
-            <NavItem 
-              icon={<BookOpen size={20} />} 
-              label="Sales Ledger" 
-              active={currentTab === 'ledger'} 
-              onClick={() => setCurrentTab('ledger')}
-            />
-            {config?.features.barcode_scanner !== false && (
-              <NavItem 
-                icon={<ShoppingCart size={20} />} 
-                label="New Bill" 
-                active={currentTab === 'new-bill'} 
-                onClick={() => setCurrentTab('new-bill')}
-              />
-            )}
-            {config?.features.inventory_management && (
-              <NavItem 
-                icon={<Package size={20} />} 
-                label="Inventory" 
-                active={currentTab === 'inventory'} 
-                onClick={() => setCurrentTab('inventory')}
-              />
-            )}
-            
-            {/* Admin-only Nav Items */}
-            {config?.features.user_auth && isAdmin && (
-              <NavItem 
-                icon={<Users size={20} />} 
-                label="Users" 
-                active={currentTab === 'users'} 
-                onClick={() => setCurrentTab('users')}
-              />
-            )}
-          </nav>
         </div>
 
-        {/* Sidebar Footer Operations */}
-        <div className="p-4 border-t theme-border space-y-1.5 bg-black/5 transition-theme">
-          {isAdmin && (
-            <NavItem 
-              icon={<SettingsIcon size={20} />} 
-              label="Settings" 
-              active={currentTab === 'settings'} 
-              onClick={() => setCurrentTab('settings')}
-            />
-          )}
-          
-          <button 
+        {/* Nav */}
+        <nav style={S.nav}>
+          {navGroups.map(group => (
+            <div key={group.label} style={S.navGroup}>
+              <span style={S.navGroupLabel}>{group.label}</span>
+              {group.items.map(item => (
+                <button key={item.id} onClick={() => setCurrentTab(item.id)} style={S.navItem(currentTab === item.id)}>
+                  <span style={{ display: 'flex', alignItems: 'center', width: 20, height: 20, flexShrink: 0 }}>{item.icon}</span>
+                  <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
+                  {currentTab === item.id && <ChevronRight size={14} color="var(--primary)" />}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        {/* User Footer */}
+        <div style={{ padding: '16px 16px 20px', borderTop: '1px solid var(--border-subtle)' }}>
+          <div style={S.userChip}>
+            <div style={S.userAvatar}>{user?.username?.charAt(0).toUpperCase()}</div>
+            <div style={{ overflow: 'hidden', flex: 1 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.username}</p>
+              <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '2px 8px', borderRadius: 999, background: 'var(--primary-subtle)', color: 'var(--primary)', border: '1px solid hsla(221,83%,53%,0.3)' }}>{user?.role}</span>
+            </div>
+          </div>
+          <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg theme-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-theme cursor-pointer font-medium text-sm"
+            style={{ ...S.navItem(false), marginBottom: 0 }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'hsla(4,86%,58%,0.08)'; (e.currentTarget as HTMLButtonElement).style.color = 'hsl(4,86%,65%)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)'; }}
           >
-            <LogOut size={20} />
-            <span>Logout</span>
+            <LogOut size={18} />
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content Pane */}
-      <main className="flex-1 theme-bg p-8 overflow-y-auto transition-theme">
-        <header className="mb-8 flex items-center justify-between border-b theme-header-border pb-6 transition-theme">
+      {/* ── MAIN ── */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Header */}
+        <header style={S.header}>
           <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2 transition-theme">
-              Welcome back, {user?.username || 'Operator'}
-              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
-                <Shield size={12} />
-                {user?.role || 'Guest'}
-              </span>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'capitalize', marginBottom: 4 }}>
+              {currentTab === 'new-bill' ? 'New Bill' : currentTab}
             </h2>
-            <p className="theme-text-secondary mt-1 transition-theme">Here's what's happening today in your {config?.shop_info.type || 'shop'}.</p>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              {config?.shop_info.name} — {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+            </p>
           </div>
-          <div className="text-right text-xs font-semibold theme-text-secondary uppercase tracking-wider transition-theme">
-            📶 100% Offline Secured
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <button style={{ position: 'relative', background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', borderRadius: 10, padding: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-secondary)' }}>
+              <Bell size={18} />
+              <span style={{ position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-red)' }} />
+            </button>
+            <div style={{ width: 1, height: 28, background: 'var(--border-subtle)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 10, background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
+              <Shield size={13} color="var(--accent-emerald)" />
+              {user?.role}
+            </div>
           </div>
         </header>
 
-        {renderContent()}
+        {/* Content */}
+        <div style={S.content}>
+          <AnimatePresence mode="wait">
+            <motion.div key={currentTab} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}>
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </main>
     </div>
   );
 };
 
-const NavItem = ({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) => (
-  <button 
-    onClick={onClick}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-theme text-sm font-medium cursor-pointer ${
-      active 
-        ? 'text-white shadow-lg shadow-black/10' 
-        : 'theme-text-secondary hover:bg-[var(--nav-hover)] hover:text-[var(--text-color)]'
-    }`}
-    style={active ? { backgroundColor: 'var(--primary)' } : undefined}
-  >
-    {icon}
-    <span>{label}</span>
-  </button>
-);
-
-const StatCard = ({ title, value, change }: { title: string, value: string, change: string }) => (
-  <div className="theme-card-solid p-6 rounded-xl border shadow-md transition-theme">
-    <h3 className="theme-text-secondary text-sm font-medium tracking-wide transition-theme">{title}</h3>
-    <div className="flex items-end gap-3 mt-2">
-      <span className="text-3xl font-bold tracking-tight transition-theme">{value}</span>
-      <span className="text-emerald-500 text-sm font-bold mb-1">{change}</span>
-    </div>
-  </div>
-);
+/* ── STAT CARD ── */
+const StatCard = ({ label, value, icon, color, glow, subtle, badge }: { label: string; value: string; icon: React.ReactNode; color: string; glow: string; subtle: string; badge: string }) => {
+  const [hovered, setHovered] = React.useState(false);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      style={{
+        ...S.statCard,
+        borderColor: hovered ? 'var(--border-glow)' : 'var(--border-subtle)',
+        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
+        boxShadow: hovered ? `0 8px 32px -8px ${glow}` : 'var(--shadow-card)',
+      }}
+    >
+      {/* BG accent */}
+      <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, transparent 50%, ${subtle})`, pointerEvents: 'none' }} />
+      {/* Icon */}
+      <div style={{ position: 'absolute', top: 24, right: 24, width: 48, height: 48, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: subtle, border: `1px solid ${glow}`, color }}>
+        {icon}
+      </div>
+      {/* Label */}
+      <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 12, position: 'relative' }}>{label}</p>
+      {/* Value */}
+      <p style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1, position: 'relative', marginBottom: 16 }}>{value}</p>
+      {/* Badge */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block', animation: 'pulse 2s infinite' }} />
+        <span style={{ fontSize: 12, fontWeight: 600, color }}>{badge}</span>
+      </div>
+    </motion.div>
+  );
+};
 
 export default Dashboard;

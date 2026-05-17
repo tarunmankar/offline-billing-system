@@ -68,4 +68,17 @@ This task tracker lists the development pipeline for the **Offline Billing Syste
   - [x] Test the compilation using `electron-builder` to generate a single self-contained Windows executable (`.exe`).
 
 ---
+
+## **Phase 6: Tier-3 Localization & Shop Enhancements ⏳**
+- [ ] **Kharcha (Expense) & Day Book System:**
+  - [ ] Implement `expenses` SQLite table and data layer.
+  - [ ] Build `Expenses.tsx` to record daily shop outflows.
+  - [ ] Build `DayBook.tsx` for End-of-Day cash counter reconciliation.
+- [ ] **Offline Sharing & Localization:**
+  - [ ] Implement PDF generation and offline WhatsApp Web link sharing (`wa.me`).
+  - [ ] Build a robust i18n JSON dictionary for Hindi translation toggle.
+- [ ] **Return & Exchange Module:**
+  - [ ] Create UI for processing sale returns and re-adding to inventory.
+
+---
 *Last Synchronized: 2026-05-17*

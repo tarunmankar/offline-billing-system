@@ -63,8 +63,15 @@ This enables a single deployment package to serve completely different retail ni
 * **Outstanding Balances:** Track unpaid transactions and map payments against historical credit.
 
 ### **Module 7: Reliability & System Administration**
-* **Automated Database Backups:** Create a lightweight background scheduler that exports a stamped SQLite copy to a `backups/` directory every 24 hours.
+* **Automated Database Backups:** Create a lightweight background scheduler that exports a stamped SQLite copy to a `backups/` directory every 24 hours. (Also support manual 1-click Auto-Backup to Pen-drive).
 * **Factory Reset Engine:** Admin-authenticated utility to wipe local SQLite database files, recreate tables, and rewrite standard `config.json` presets.
+
+### **Module 8: Tier-3 Shop Specific Enhancements**
+* **Day Book (Galla) Module:** End-of-day summary of total Cash vs UPI received, adjusted with shop expenses.
+* **Daily Expense (Kharcha) Tracker:** A simple ledger to record shop expenses (Tea, Labour, etc.) to calculate actual daily net profit.
+* **Offline-Friendly WhatsApp Sharing:** Ability to generate "wa.me" links or PDF exports to instantly share bills or Udhaar reminders via desktop WhatsApp without requiring internet-based APIs.
+* **Return & Exchange Engine:** Simplified workflow to take back items, auto-adjust inventory, and issue credit notes or deduct from current bills.
+* **Hindi Language Support (Localization):** 1-click UI toggle to translate the software interface to Hindi for easier adoption by local staff.
 
 ---
 

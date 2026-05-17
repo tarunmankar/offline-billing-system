@@ -155,3 +155,28 @@ ipcMain.handle('save-sale', (_, payload) => {
 
   return transaction();
 });
+
+// --- EXPENSES DB HANDLERS ---
+ipcMain.handle('get-expenses', () => {
+  if (!db) return [];
+  return db.prepare(`
+    SELECT e.*, u.username as user 
+    FROM expenses e 
+    JOIN users u ON e.user_id = u.id 
+    ORDER BY e.timestamp DESC
+  `).all();
+});
+
+ipcMain.handle('add-expense', (_, { userId, amount, description }) => {
+  if (!db) throw new Error('Database not initialized');
+  const result = db.prepare(
+    'INSERT INTO expenses (user_id, amount, description) VALUES (?, ?, ?)'
+  ).run(userId, amount, description);
+  return result.lastInsertRowid;
+});
+
+ipcMain.handle('delete-expense', (_, id) => {
+  if (!db) throw new Error('Database not initialized');
+  db.prepare('DELETE FROM expenses WHERE id = ?').run(id);
+  return true;
+});

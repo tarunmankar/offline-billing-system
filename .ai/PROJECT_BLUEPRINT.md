@@ -112,6 +112,17 @@ offline-billing-system/
   * Restricts access to Administrators only.
   * Changes save instantly to `config.json` and update UI styles in real-time.
   * Provides backup triggers and complete database resets with confirmation prompts.
+  * **Localization Toggle:** Switch between English and Hindi UI.
+
+### **G. Daily Expense (Kharcha) Tracker (`Expenses.tsx`)**
+* **Aesthetics:** Simple, clean list view with a minimalist entry form on top. 
+* **Layout:** Date picker, Expense Reason (dropdown or text), Amount, and Add button.
+* **Logic:** Records daily shop outflows to calculate accurate net profit.
+
+### **H. Day Book (Galla) Summary (`DayBook.tsx`)**
+* **Aesthetics:** Large, high-contrast numbers for easy readability at the end of the day.
+* **Layout:** Displays Cash In, UPI In, Expenses Out, and Net Cash Expected in the Drawer.
+* **Logic:** Computes data from `sales`, `credit_ledger`, and `expenses` tables for a given day.
 
 ---
 *Document Status: ACTIVE | Blueprint Roadmap 2026-05-17*

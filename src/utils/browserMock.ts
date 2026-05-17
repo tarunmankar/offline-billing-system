@@ -213,6 +213,30 @@ if (!(window as any).electronAPI) {
         window.location.reload();
         resolve(true);
       }, 1500));
+    },
+    getExpenses: async () => {
+      const expenses = JSON.parse(localStorage.getItem('mock_expenses') || '[]');
+      return expenses.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    },
+    addExpense: async ({ userId, amount, description }: any) => {
+      const expenses = JSON.parse(localStorage.getItem('mock_expenses') || '[]');
+      const newExpense = {
+        id: expenses.length > 0 ? Math.max(...expenses.map((e: any) => e.id)) + 1 : 1,
+        user_id: userId,
+        user: userId === 1 ? 'admin' : 'cashier',
+        amount: Number(amount),
+        description,
+        timestamp: new Date().toISOString()
+      };
+      expenses.push(newExpense);
+      localStorage.setItem('mock_expenses', JSON.stringify(expenses));
+      return newExpense.id;
+    },
+    deleteExpense: async (id: number) => {
+      let expenses = JSON.parse(localStorage.getItem('mock_expenses') || '[]');
+      expenses = expenses.filter((e: any) => e.id !== id);
+      localStorage.setItem('mock_expenses', JSON.stringify(expenses));
+      return true;
     }
   };
 }

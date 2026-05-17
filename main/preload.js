@@ -20,4 +20,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   backupDatabase: () => ipcRenderer.invoke('db:backup'),
   resetDatabase: () => ipcRenderer.invoke('db:reset'),
   restoreDatabase: (backupData) => ipcRenderer.invoke('db:restore', backupData),
+  // Expenses
+  getExpenses: () => ipcRenderer.invoke('get-expenses'),
+  addExpense: (expense) => ipcRenderer.invoke('add-expense', expense),
+  deleteExpense: (id) => ipcRenderer.invoke('delete-expense', id),
 });

@@ -28,6 +28,7 @@ erDiagram
     SALES ||--o{ SALE_ITEMS : "contains"
     SALES ||--o| CREDIT_LEDGER : "records due in"
     PRODUCTS ||--o{ SALE_ITEMS : "sold via"
+    USERS ||--o{ EXPENSES : "records"
 
     USERS {
         INTEGER id PK
@@ -75,6 +76,15 @@ erDiagram
         INTEGER customer_id FK
         INTEGER sale_id FK
         REAL amount
+        TEXT description
+        DATETIME timestamp
+    }
+
+    EXPENSES {
+        INTEGER id PK
+        INTEGER user_id FK
+        REAL amount
+        TEXT category
         TEXT description
         DATETIME timestamp
     }
@@ -153,6 +163,19 @@ CREATE TABLE IF NOT EXISTS credit_ledger (
     customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
     sale_id INTEGER REFERENCES sales(id) ON DELETE SET NULL, -- Maps to a transaction if applicable
     amount REAL NOT NULL, -- Positive = Credit issued, Negative = Cash payment made
+    description TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### **G. Expenses Table**
+Tracks daily shop expenses (Kharcha) for accurate Day Book calculations.
+```sql
+CREATE TABLE IF NOT EXISTS expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    amount REAL NOT NULL CHECK(amount > 0),
+    category TEXT DEFAULT 'General',
     description TEXT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );

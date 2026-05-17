@@ -17,7 +17,7 @@ const renderHighlightedText = (text: string, query: string) => {
     <span>
       {parts.map((part, index) => 
         regex.test(part) ? (
-          <span key={index} className="text-[#3b82f6] font-extrabold underline decoration-[#3b82f6]/40 bg-blue-500/10 px-0.5 rounded">
+          <span key={index} style={{ color: 'var(--primary)', fontWeight: 800, textDecoration: 'underline', textDecorationColor: 'rgba(59, 130, 246, 0.4)', background: 'var(--primary-subtle)', padding: '0 4px', borderRadius: 4 }}>
             {part}
           </span>
         ) : (
@@ -281,13 +281,13 @@ export default function Billing() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-140px)] gap-6">
+    <div style={{ display: 'flex', height: 'calc(100vh - 140px)', gap: 24 }}>
       {/* Left Pane: Cart & Search suggestions */}
-      <div className="flex-1 flex flex-col bg-black/5 rounded-xl border theme-border overflow-hidden shadow-inner transition-theme">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 20, overflow: 'hidden', boxShadow: 'var(--shadow-card)', transition: 'all 0.2s' }}>
         {/* Search / Barcode Input Bar with floating drop-down */}
-        <div className="p-4 border-b theme-border bg-black/10 transition-theme z-30" ref={containerRef}>
-          <form onSubmit={handleBarcodeSubmit} className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+        <div style={{ padding: 16, borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-overlay)', transition: 'all 0.2s', zIndex: 30 }} ref={containerRef}>
+          <form onSubmit={handleBarcodeSubmit} style={{ position: 'relative' }}>
+            <Search style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} size={20} />
             <input 
               ref={barcodeRef}
               type="text" 
@@ -295,13 +295,13 @@ export default function Billing() {
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={handleInputKeyDown}
               placeholder="Search by Product Name or Scan Barcode... (Auto-focused)" 
-              className="w-full pl-12 pr-4 py-4 bg-black/20 border theme-border rounded-lg text-lg focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-all text-white font-mono shadow-inner"
+              style={{ width: '100%', paddingLeft: 48, paddingRight: 16, paddingTop: 14, paddingBottom: 14, background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', borderRadius: 12, fontSize: 16, outline: 'none', transition: 'all 0.2s', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)' }}
               disabled={isProcessing}
             />
 
             {/* Smart Suggestions Floating Dropdown */}
             {suggestions.length > 0 && (
-              <div className="absolute z-50 left-0 right-0 mt-2 bg-[#1e293b] border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto backdrop-blur-md transition-all">
+              <div style={{ position: 'absolute', zIndex: 50, left: 0, right: 0, marginTop: 8, background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)', borderRadius: 14, boxShadow: 'var(--shadow-card)', overflow: 'hidden', maxHeight: 256, overflowY: 'auto', backdropFilter: 'blur(12px)', transition: 'all 0.2s' }}>
                 {suggestions.map((p, idx) => (
                   <div
                     key={p.id}
@@ -310,21 +310,27 @@ export default function Billing() {
                       setBarcodeInput('');
                       setSuggestions([]);
                     }}
-                    className={`p-3.5 border-b border-slate-800/40 cursor-pointer flex justify-between items-center transition-all ${
-                      idx === activeSuggestionIndex 
-                        ? 'bg-blue-500/20 text-blue-400 font-bold border-l-4 border-blue-500' 
-                        : 'hover:bg-white/5 text-slate-200'
-                    }`}
+                    style={{
+                      padding: 14,
+                      borderBottom: '1px solid var(--border-subtle)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      transition: 'all 0.2s',
+                      background: idx === activeSuggestionIndex ? 'var(--primary-subtle)' : 'transparent',
+                      borderLeft: idx === activeSuggestionIndex ? '4px solid var(--primary)' : '4px solid transparent'
+                    }}
                   >
                     <div>
-                      <div className="font-semibold text-sm">
+                      <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>
                         {renderHighlightedText(p.name, barcodeInput)}
                       </div>
-                      <div className="text-xs text-slate-400 mt-1 font-mono">
-                        Code: {renderHighlightedText(p.barcode, barcodeInput)} | Stock: <span className={p.stock <= 5 ? 'text-amber-400 font-bold' : ''}>{p.stock}</span>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
+                        Code: {renderHighlightedText(p.barcode, barcodeInput)} | Stock: <span style={{ color: p.stock <= 5 ? 'var(--accent-amber)' : 'var(--text-secondary)', fontWeight: p.stock <= 5 ? 700 : 'normal' }}>{p.stock}</span>
                       </div>
                     </div>
-                    <div className="font-mono font-bold text-sm text-[var(--primary)]">₹{Number(p.price).toFixed(2)}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14, color: 'var(--primary)' }}>₹{Number(p.price).toFixed(2)}</div>
                   </div>
                 ))}
               </div>
@@ -333,47 +339,47 @@ export default function Billing() {
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
           {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-60">
-              <ShoppingCart size={64} className="mb-4 opacity-50" />
-              <p className="text-xl font-medium">Terminal Ready</p>
-              <p className="text-sm mt-1">Search product or scan barcode to begin checkout</p>
+            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+              <ShoppingCart size={64} style={{ marginBottom: 16, opacity: 0.5 }} />
+              <p style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-secondary)' }}>Terminal Ready</p>
+              <p style={{ fontSize: 13, marginTop: 4, color: 'var(--text-muted)' }}>Search product or scan barcode to begin checkout</p>
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
+            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
               <thead>
-                <tr className="border-b theme-border text-xs text-gray-400 uppercase tracking-wider transition-theme">
-                  <th className="pb-3 font-semibold">Product</th>
-                  <th className="pb-3 font-semibold text-center">Qty</th>
-                  <th className="pb-3 font-semibold text-right">Rate</th>
-                  <th className="pb-3 font-semibold text-right">Total</th>
-                  <th className="pb-3"></th>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ paddingBottom: 12, fontWeight: 600 }}>Product</th>
+                  <th style={{ paddingBottom: 12, fontWeight: 600, textAlign: 'center' }}>Qty</th>
+                  <th style={{ paddingBottom: 12, fontWeight: 600, textAlign: 'right' }}>Rate</th>
+                  <th style={{ paddingBottom: 12, fontWeight: 600, textAlign: 'right' }}>Total</th>
+                  <th style={{ paddingBottom: 12 }}></th>
                 </tr>
               </thead>
               <tbody>
                 {cart.map((item, idx) => (
-                  <tr key={`${item.id}-${idx}`} className="border-b theme-border/50 hover:bg-white/5 transition-colors">
-                    <td className="py-4">
-                      <div className="font-bold text-[var(--text-color)]">{item.name}</div>
-                      <div className="text-xs theme-text-secondary mt-1">Code: {item.barcode || item.id} | Tax: {item.taxPercent}%</div>
+                  <tr key={`${item.id}-${idx}`} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <td style={{ paddingTop: 16, paddingBottom: 16 }}>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{item.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>Code: {item.barcode || item.id} | Tax: {item.taxPercent}%</div>
                     </td>
-                    <td className="py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => updateQuantity(item.id, -1)} className="p-1.5 hover:bg-white/10 rounded-md transition-colors">
-                          <Minus size={14} />
+                    <td style={{ paddingTop: 16, paddingBottom: 16, textAlign: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                        <button onClick={() => updateQuantity(item.id, -1)} style={{ padding: 6, background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                          <Minus size={12} />
                         </button>
-                        <span className="w-8 text-center font-bold">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, 1)} className="p-1.5 hover:bg-white/10 rounded-md transition-colors">
-                          <Plus size={14} />
+                        <span style={{ width: 32, textAlign: 'center', fontWeight: 700, fontSize: 14 }}>{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.id, 1)} style={{ padding: 6, background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                          <Plus size={12} />
                         </button>
                       </div>
                     </td>
-                    <td className="py-4 text-right font-mono theme-text-secondary">₹{item.rate.toFixed(2)}</td>
-                    <td className="py-4 text-right font-mono font-bold text-[var(--text-color)]">₹{(item.quantity * item.rate).toFixed(2)}</td>
-                    <td className="py-4 text-right">
-                      <button onClick={() => removeItem(item.id)} className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors" title="Remove Item">
-                        <Trash2 size={18} />
+                    <td style={{ paddingTop: 16, paddingBottom: 16, textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>₹{item.rate.toFixed(2)}</td>
+                    <td style={{ paddingTop: 16, paddingBottom: 16, textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-primary)' }}>₹{(item.quantity * item.rate).toFixed(2)}</td>
+                    <td style={{ paddingTop: 16, paddingBottom: 16, textAlign: 'right' }}>
+                      <button onClick={() => removeItem(item.id)} style={{ padding: 8, background: 'transparent', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }} title="Remove Item">
+                        <Trash2 size={16} />
                       </button>
                     </td>
                   </tr>
@@ -385,28 +391,28 @@ export default function Billing() {
       </div>
 
       {/* Right Pane: Totalizer */}
-      <div className="w-80 flex flex-col gap-4 shrink-0">
-        <div className="theme-card-solid rounded-xl border p-6 shadow-xl flex flex-col gap-4 transition-theme">
-          <h3 className="font-bold text-sm border-b theme-border pb-3 uppercase tracking-widest theme-text-secondary">Payment Summary</h3>
+      <div style={{ width: 320, display: 'flex', flexDirection: 'column', gap: 16, flexShrink: 0 }}>
+        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 20, padding: 24, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: 16, transition: 'all 0.2s' }}>
+          <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 12, color: 'var(--text-secondary)' }}>Payment Summary</h3>
           
-          <div className="space-y-3 mt-2">
-            <div className="flex justify-between items-center theme-text-secondary text-sm">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
               <span>Taxable Amount</span>
-              <span className="font-mono font-medium">₹{totals.taxableAmount.toFixed(2)}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500 }}>₹{totals.taxableAmount.toFixed(2)}</span>
             </div>
             
             {Object.entries(totals.taxDetails).map(([key, val]: any) => (
-              <div key={key} className="flex justify-between items-center theme-text-secondary text-sm">
+              <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
                 <span>{key}</span>
-                <span className="font-mono font-medium">₹{val.toFixed(2)}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500 }}>₹{val.toFixed(2)}</span>
               </div>
             ))}
           </div>
 
-          <div className="border-t theme-border pt-4 mt-2 transition-theme">
-            <div className="flex justify-between items-end">
-              <span className="theme-text-secondary uppercase tracking-widest text-[10px] font-bold mb-1">Grand Total</span>
-              <span className="text-3xl font-bold font-mono text-[var(--primary)] drop-shadow-md">₹{totals.grandTotal.toFixed(2)}</span>
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 16, marginTop: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <span style={{ color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: 10, fontWeight: 700, marginBottom: 4 }}>Grand Total</span>
+              <span style={{ fontSize: 26, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--primary)' }}>₹{totals.grandTotal.toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -414,18 +420,30 @@ export default function Billing() {
         <button 
           onClick={handleCheckout}
           disabled={cart.length === 0 || isProcessing}
-          className="w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg text-white mt-auto hover:brightness-110 active:scale-95 disabled:active:scale-100 disabled:hover:brightness-100"
-          style={{ 
-            backgroundColor: cart.length === 0 ? 'var(--bg-card)' : 'var(--primary)',
+          style={{
+            width: '100%',
+            padding: 16,
+            borderRadius: 14,
+            fontWeight: 700,
+            fontSize: 16,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            transition: 'all 0.2s',
+            color: 'white',
+            border: 'none',
+            backgroundColor: cart.length === 0 ? 'var(--bg-overlay)' : 'var(--primary)',
             opacity: cart.length === 0 ? 0.5 : 1,
-            cursor: cart.length === 0 ? 'not-allowed' : 'pointer'
+            cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
+            boxShadow: cart.length === 0 ? 'none' : 'var(--shadow-button)'
           }}
         >
           {isProcessing ? (
-            <span className="animate-pulse flex items-center gap-2">
-              <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg style={{ animation: 'spin 1s linear infinite', height: 20, width: 20, color: 'white' }} fill="none" viewBox="0 0 24 24">
+                <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
               Processing...
             </span>
