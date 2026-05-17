@@ -44,13 +44,13 @@ This task tracker lists the development pipeline for the **Offline Billing Syste
 ---
 
 ## **Phase 4: Billing Terminal & Native Hardware Integration ⏳**
-- [ ] **Product Catalog CRUD System:**
-  - [ ] Develop data management forms for product additions, edits, and deletions.
-  - [ ] Serialize custom fields into the `metadata` JSON column.
-- [ ] **Checkout Terminal & Cart Calculations:**
-  - [ ] Code billing engine layout with automatic input focus on barcode scanning actions.
-  - [ ] Implement real-time transactional pricing grids.
-  - [ ] Program tax processing algorithms displaying CGST/SGST/VAT breakdowns.
+- [x] **Product Catalog CRUD System:**
+  - [x] Develop data management forms for product additions, edits, and deletions.
+  - [x] Serialize custom fields into the `metadata` JSON column.
+- [x] **Checkout Terminal & Cart Calculations:**
+  - [x] Code billing engine layout with automatic input focus on barcode scanning actions.
+  - [x] Implement real-time transactional pricing grids.
+  - [x] Program tax processing algorithms displaying CGST/SGST/VAT breakdowns.
 - [ ] **Native Printing Interface (`PrintManager.ts`):**
   - [ ] Integrate thermal printing mechanisms (ESC/POS) using direct printer driver links.
   - [ ] Design background window standard print models for beautiful A4 layouts.

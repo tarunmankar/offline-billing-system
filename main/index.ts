@@ -104,3 +104,45 @@ ipcMain.handle('get-product-by-barcode', (_, barcode) => {
   if (!db) return null;
   return db.prepare('SELECT * FROM products WHERE barcode = ?').get(barcode);
 });
+
+ipcMain.handle('update-product', (_, { id, product }) => {
+  if (!db) throw new Error('Database not initialized');
+  const { name, price, stock, barcode, metadata } = product;
+  db.prepare(
+    'UPDATE products SET name = ?, price = ?, stock = ?, barcode = ?, metadata = ? WHERE id = ?'
+  ).run(name, price, stock, barcode, JSON.stringify(metadata), id);
+  return true;
+});
+
+ipcMain.handle('delete-product', (_, id) => {
+  if (!db) throw new Error('Database not initialized');
+  db.prepare('DELETE FROM products WHERE id = ?').run(id);
+  return true;
+});
+
+ipcMain.handle('save-sale', (_, payload) => {
+  if (!db) throw new Error('Database not initialized');
+  const { userId, totalAmount, taxTotal, taxDetails, items } = payload;
+  
+  const insertSale = db.prepare(
+    'INSERT INTO sales (user_id, total_amount, tax_total, tax_details) VALUES (?, ?, ?, ?)'
+  );
+  const insertItem = db.prepare(
+    'INSERT INTO sale_items (sale_id, product_id, quantity, rate, tax_percent) VALUES (?, ?, ?, ?, ?)'
+  );
+  const updateProductStock = db.prepare(
+    'UPDATE products SET stock = stock - ? WHERE id = ?'
+  );
+
+  const transaction = db.transaction(() => {
+    const saleResult = insertSale.run(userId, totalAmount, taxTotal, JSON.stringify(taxDetails));
+    const saleId = saleResult.lastInsertRowid;
+    for (const item of items) {
+      insertItem.run(saleId, item.productId, item.quantity, item.rate, item.taxPercent);
+      updateProductStock.run(item.quantity, item.productId);
+    }
+    return saleId;
+  });
+
+  return transaction();
+});

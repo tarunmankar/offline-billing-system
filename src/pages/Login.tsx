@@ -47,7 +47,7 @@ const Login: React.FC = () => {
 
   // Dynamically select shop type icon for premium feel
   const renderShopIcon = () => {
-    const type = config?.shop_info.type?.toLowerCase();
+    const type = config?.shop_info?.type?.toLowerCase();
     const style = { color: 'var(--primary, #2563eb)' };
 
     if (type === 'pharmacy' || type === 'medical') {
@@ -86,7 +86,7 @@ const Login: React.FC = () => {
             transition={{ delay: 0.2 }}
             className="mt-5 text-2xl font-bold tracking-tight text-white"
           >
-            {config?.shop_info.name || 'Billing Pro 2026'}
+            {config?.shop_info?.name || 'Billing Pro 2026'}
           </motion.h2>
 
           <motion.p
@@ -96,7 +96,7 @@ const Login: React.FC = () => {
             className="mt-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-slate-400"
           >
             <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--primary, #2563eb)' }} />
-            {config?.shop_info.type || 'RETAIL TERMINAL'} OPERATOR BOOT
+            {config?.shop_info?.type || 'RETAIL TERMINAL'} OPERATOR BOOT
           </motion.p>
         </div>
 

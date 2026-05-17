@@ -3,11 +3,14 @@ import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Shield } from 'lucide-react';
 import DynamicForm from '../components/DynamicForm';
+import Inventory from './Inventory';
+import Billing from './Billing';
 
 const Dashboard: React.FC = () => {
   const { config, loading: configLoading } = useConfig();
   const { user, logout } = useAuth();
   
+  const [currentTab, setCurrentTab] = useState<'dashboard' | 'new-bill' | 'inventory' | 'settings' | 'users'>('dashboard');
   const [formValues, setFormValues] = useState<Record<string, string | number>>({});
 
   const isAdmin = user?.role === 'Admin';
@@ -15,6 +18,73 @@ const Dashboard: React.FC = () => {
   if (configLoading) {
     return <div className="flex h-screen items-center justify-center text-white bg-slate-950">Loading config...</div>;
   }
+
+  const renderContent = () => {
+    switch (currentTab) {
+      case 'inventory':
+        return <Inventory />;
+      case 'new-bill':
+        return <Billing />;
+      case 'settings':
+        return (
+          <div className="theme-card-solid border rounded-xl p-8 shadow-lg transition-theme text-center max-w-2xl mx-auto mt-10">
+            <Settings className="text-purple-500 mx-auto mb-4 opacity-80" size={48} />
+            <h3 className="text-xl font-bold mb-2">System Settings</h3>
+            <p className="theme-text-secondary text-sm">Under development. Complete administrative panel controls to write active configuration profiles locally.</p>
+          </div>
+        );
+      case 'users':
+        return (
+          <div className="theme-card-solid border rounded-xl p-8 shadow-lg transition-theme text-center max-w-2xl mx-auto mt-10">
+            <Users className="text-emerald-500 mx-auto mb-4 opacity-80" size={48} />
+            <h3 className="text-xl font-bold mb-2">User Authorization Panel</h3>
+            <p className="theme-text-secondary text-sm">Under development. Manage cashier roles, verify offline credentials, and define operational restrictions.</p>
+          </div>
+        );
+      case 'dashboard':
+      default:
+        return (
+          <>
+            {/* Dashboard Stat Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatCard title="Today's Sales" value="₹ 12,450" change="+12%" />
+              <StatCard title="Items Sold" value="45" change="+5%" />
+              <StatCard title="Active Customers" value="28" change="+2%" />
+            </div>
+
+            {/* Dynamic Config Context Check */}
+            <div className="mt-8 theme-card-solid border rounded-xl p-6 shadow-lg transition-theme">
+               <h3 className="text-lg font-bold mb-4 flex items-center gap-2 transition-theme">
+                 ⚙️ Dynamic Setup Check
+               </h3>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 theme-input rounded-lg border transition-theme">
+                     <p className="text-xs theme-text-secondary opacity-80 font-semibold uppercase tracking-wider transition-theme">Tax Identifier</p>
+                     <p className="font-mono mt-1 font-bold transition-theme">{config?.shop_info.tax_label}</p>
+                  </div>
+                  <div className="p-4 theme-input rounded-lg border transition-theme">
+                     <p className="text-xs theme-text-secondary opacity-80 font-semibold uppercase tracking-wider transition-theme">Default Invoice Print Format</p>
+                     <p className="font-mono mt-1 font-bold transition-theme">{config?.billing_settings.print_format}</p>
+                  </div>
+               </div>
+            </div>
+
+            {/* Dynamic Form Preview */}
+            {config?.custom_fields && config.custom_fields.length > 0 && (
+              <div className="mt-8 mb-4">
+                <DynamicForm 
+                  fields={config.custom_fields as any}
+                  values={formValues}
+                  onChange={(key, value) => setFormValues(prev => ({ ...prev, [key]: value }))}
+                  title="Dynamic Config Fields (Preview)"
+                  description="These fields are instantly generated strictly from your config.json custom_fields array."
+                />
+              </div>
+            )}
+          </>
+        );
+    }
+  };
 
   return (
     <div className="flex h-screen w-screen overflow-hidden theme-bg font-sans transition-theme">
@@ -33,17 +103,37 @@ const Dashboard: React.FC = () => {
 
           {/* Navigation Items */}
           <nav className="p-4 space-y-1.5">
-            <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard" active />
+            <NavItem 
+              icon={<LayoutDashboard size={20} />} 
+              label="Dashboard" 
+              active={currentTab === 'dashboard'} 
+              onClick={() => setCurrentTab('dashboard')}
+            />
             {config?.features.barcode_scanner !== false && (
-              <NavItem icon={<ShoppingCart size={20} />} label="New Bill" />
+              <NavItem 
+                icon={<ShoppingCart size={20} />} 
+                label="New Bill" 
+                active={currentTab === 'new-bill'} 
+                onClick={() => setCurrentTab('new-bill')}
+              />
             )}
             {config?.features.inventory_management && (
-              <NavItem icon={<Package size={20} />} label="Inventory" />
+              <NavItem 
+                icon={<Package size={20} />} 
+                label="Inventory" 
+                active={currentTab === 'inventory'} 
+                onClick={() => setCurrentTab('inventory')}
+              />
             )}
             
             {/* Admin-only Nav Items */}
             {config?.features.user_auth && isAdmin && (
-              <NavItem icon={<Users size={20} />} label="Users" />
+              <NavItem 
+                icon={<Users size={20} />} 
+                label="Users" 
+                active={currentTab === 'users'} 
+                onClick={() => setCurrentTab('users')}
+              />
             )}
           </nav>
         </div>
@@ -51,7 +141,12 @@ const Dashboard: React.FC = () => {
         {/* Sidebar Footer Operations */}
         <div className="p-4 border-t theme-border space-y-1.5 bg-black/5 transition-theme">
           {isAdmin && (
-            <NavItem icon={<Settings size={20} />} label="Settings" />
+            <NavItem 
+              icon={<Settings size={20} />} 
+              label="Settings" 
+              active={currentTab === 'settings'} 
+              onClick={() => setCurrentTab('settings')}
+            />
           )}
           
           <button 
@@ -82,49 +177,15 @@ const Dashboard: React.FC = () => {
           </div>
         </header>
 
-        {/* Dashboard Stat Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard title="Today's Sales" value="₹ 12,450" change="+12%" />
-          <StatCard title="Items Sold" value="45" change="+5%" />
-          <StatCard title="Active Customers" value="28" change="+2%" />
-        </div>
-
-        {/* Dynamic Config Context Check */}
-        <div className="mt-8 theme-card-solid border rounded-xl p-6 shadow-lg transition-theme">
-           <h3 className="text-lg font-bold mb-4 flex items-center gap-2 transition-theme">
-             ⚙️ Dynamic Setup Check
-           </h3>
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 theme-input rounded-lg border transition-theme">
-                 <p className="text-xs theme-text-secondary opacity-80 font-semibold uppercase tracking-wider transition-theme">Tax Identifier</p>
-                 <p className="font-mono mt-1 font-bold transition-theme">{config?.shop_info.tax_label}</p>
-              </div>
-              <div className="p-4 theme-input rounded-lg border transition-theme">
-                 <p className="text-xs theme-text-secondary opacity-80 font-semibold uppercase tracking-wider transition-theme">Default Invoice Print Format</p>
-                 <p className="font-mono mt-1 font-bold transition-theme">{config?.billing_settings.print_format}</p>
-              </div>
-           </div>
-        </div>
-
-        {/* Dynamic Form Preview */}
-        {config?.custom_fields && config.custom_fields.length > 0 && (
-          <div className="mt-8 mb-4">
-            <DynamicForm 
-              fields={config.custom_fields as any}
-              values={formValues}
-              onChange={(key, value) => setFormValues(prev => ({ ...prev, [key]: value }))}
-              title="Dynamic Config Fields (Preview)"
-              description="These fields are instantly generated strictly from your config.json custom_fields array."
-            />
-          </div>
-        )}
+        {renderContent()}
       </main>
     </div>
   );
 };
 
-const NavItem = ({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) => (
+const NavItem = ({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) => (
   <button 
+    onClick={onClick}
     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-theme text-sm font-medium cursor-pointer ${
       active 
         ? 'text-white shadow-lg shadow-black/10' 

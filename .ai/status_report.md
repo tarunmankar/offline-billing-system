@@ -119,7 +119,7 @@ graph TD
 ---
 
 ### **Phase 4 & 5: Core Operations & Packaging (Upcoming ⏳)**
-* **[ ] Product Catalog CRUD System:** Forms to insert/update items, serializing dynamic custom fields into database `metadata` JSON column.
+* **[x] Product Catalog CRUD System:** Designed and implemented a responsive forms manager to insert, update, and delete product records, automatically parsing and serializing dynamic custom fields (like Batch No and Expiry Date) securely into the database `metadata` JSON column.
 * **[ ] Checkout Terminal:** Real-time billing calculations, barcodes scanner integration with auto-focus focus traps, and tax breakdowns.
 * **[ ] ESC/POS Thermal Printing:** Physical thermal print layouts.
 * **[ ] Daily DB Backups & Reset Utility:** Automated backup triggers to a local `backups/` directory.
@@ -129,9 +129,9 @@ graph TD
 
 ## **💡 Immediate Next Steps & Recommendations**
 
-To keep moving productively, we should target the start of **Phase 4**:
-1. **Product CRUD Database & IPC Handlers:** Establish IPC channels and SQLite queries to insert, edit, and delete products locally.
-2. **Metadata Column Serialization:** Serialize and parse dynamic configuration fields (like Batch No and Expiry Date) securely inside the SQLite `metadata` JSON column.
+To keep moving productively, we should target the next part of **Phase 4**:
+1. **Checkout Terminal Layout & Barcode Focus:** Design and build the real-time billing checkout interface (`src/pages/Checkout.tsx` or integrated terminal), with barcode scanner auto-focus triggers and dynamic cart states.
+2. **Tax Calculations & Breakdown:** Implement CGST/SGST/VAT computation engine matching config.json parameter scopes.
 
 > [!NOTE]
 > All systems are extremely healthy. No active errors are listed in the diagnostic memory logs (`.ai/ERROR_LOGS.md`).
