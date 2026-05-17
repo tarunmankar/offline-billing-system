@@ -16,4 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Printing
   getPrinters: () => ipcRenderer.invoke('get-printers'),
   printReceipt: (payload) => ipcRenderer.invoke('print-receipt', payload),
+  // Database Operations
+  backupDatabase: () => ipcRenderer.invoke('db:backup'),
+  resetDatabase: () => ipcRenderer.invoke('db:reset'),
 });

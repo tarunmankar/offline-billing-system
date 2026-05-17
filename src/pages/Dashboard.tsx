@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Users, Settings as SettingsIcon, LogOut, Shield } from 'lucide-react';
 import DynamicForm from '../components/DynamicForm';
 import Inventory from './Inventory';
 import Billing from './Billing';
 import ExpiryAlert from '../components/ExpiryAlert';
+import Settings from './Settings';
 
 const Dashboard: React.FC = () => {
   const { config, loading: configLoading } = useConfig();
@@ -27,13 +28,7 @@ const Dashboard: React.FC = () => {
       case 'new-bill':
         return <Billing />;
       case 'settings':
-        return (
-          <div className="theme-card-solid border rounded-xl p-8 shadow-lg transition-theme text-center max-w-2xl mx-auto mt-10">
-            <Settings className="text-purple-500 mx-auto mb-4 opacity-80" size={48} />
-            <h3 className="text-xl font-bold mb-2">System Settings</h3>
-            <p className="theme-text-secondary text-sm">Under development. Complete administrative panel controls to write active configuration profiles locally.</p>
-          </div>
-        );
+        return <Settings />;
       case 'users':
         return (
           <div className="theme-card-solid border rounded-xl p-8 shadow-lg transition-theme text-center max-w-2xl mx-auto mt-10">
@@ -148,7 +143,7 @@ const Dashboard: React.FC = () => {
         <div className="p-4 border-t theme-border space-y-1.5 bg-black/5 transition-theme">
           {isAdmin && (
             <NavItem 
-              icon={<Settings size={20} />} 
+              icon={<SettingsIcon size={20} />} 
               label="Settings" 
               active={currentTab === 'settings'} 
               onClick={() => setCurrentTab('settings')}

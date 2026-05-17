@@ -184,6 +184,22 @@ if (!(window as any).electronAPI) {
         printWindow.document.close();
       }
       return true;
+    },
+    backupDatabase: async () => {
+      console.log('%c[Mock Backup Activated]', 'color: darkgreen; font-weight: bold;');
+      return new Promise(resolve => setTimeout(() => {
+        const fakePath = 'C:\\Users\\MockUser\\AppData\\Roaming\\offline-billing\\backups\\billing_backup_2026-05-17.db';
+        resolve(fakePath);
+      }, 1000));
+    },
+    resetDatabase: async () => {
+      console.log('%c[Mock Factory Reset Activated]', 'color: red; font-weight: bold;');
+      return new Promise(resolve => setTimeout(() => {
+        localStorage.clear();
+        alert('Browser database fully wiped! App restarting now...');
+        window.location.reload();
+        resolve(true);
+      }, 1500));
     }
   };
 }
