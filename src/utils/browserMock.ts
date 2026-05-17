@@ -2,20 +2,29 @@ if (!(window as any).electronAPI) {
   console.warn('⚠️ Running in Browser Mode. Injecting global database & IPC mocks for full sandboxed testing!');
 
   // Helper to load/save products from localStorage
-  const getMockProducts = () => {
-    const stored = localStorage.getItem('mock_products');
-    if (!stored) {
-      // Seed initial products (including the requested '123' barcode)
-      const initial = [
-        { id: 1, name: 'Paracetamol 500mg', price: 45.0, stock: 150, barcode: '123', metadata: '{}' },
-        { id: 2, name: 'Amoxicillin Syrup', price: 120.0, stock: 45, barcode: '456', metadata: '{}' },
-        { id: 3, name: 'Vitamin C Chewables', price: 80.0, stock: 200, barcode: '789', metadata: '{}' }
-      ];
-      localStorage.setItem('mock_products', JSON.stringify(initial));
-      return initial;
-    }
-    return JSON.parse(stored);
-  };
+      const getMockProducts = () => {
+        const stored = localStorage.getItem('mock_products');
+        if (!stored) {
+          // Seed initial products (with low stock & near expiry fields for rich testing)
+          const today = new Date();
+          const nearExpiryDate = new Date();
+          nearExpiryDate.setDate(today.getDate() + 10); // 10 days from now (near expiry)
+          
+          const expiredDate = new Date();
+          expiredDate.setDate(today.getDate() - 15); // 15 days ago (expired)
+
+          const initial = [
+            { id: 1, name: 'Paracetamol 500mg', price: 45.0, stock: 150, barcode: '123', metadata: '{"expiry":"2028-12-30"}' },
+            { id: 2, name: 'Amoxicillin Syrup', price: 120.0, stock: 3, barcode: '456', metadata: `{"expiry":"${nearExpiryDate.toISOString().split('T')[0]}"}` },
+            { id: 3, name: 'Vitamin C Chewables', price: 80.0, stock: 200, barcode: '789', metadata: '{"expiry":"2028-11-15"}' },
+            { id: 4, name: 'Expired Cough Lozenges', price: 65.0, stock: 12, barcode: '321', metadata: `{"expiry":"${expiredDate.toISOString().split('T')[0]}"}` },
+            { id: 5, name: 'Out of Stock Aspirin', price: 55.0, stock: 0, barcode: '654', metadata: '{}' }
+          ];
+          localStorage.setItem('mock_products', JSON.stringify(initial));
+          return initial;
+        }
+        return JSON.parse(stored);
+      };
 
   const saveMockProducts = (products: any[]) => {
     localStorage.setItem('mock_products', JSON.stringify(products));
