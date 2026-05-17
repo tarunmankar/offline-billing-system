@@ -94,10 +94,13 @@ AI ko direct ye kaam automatically nahi karna chahiye:
 
 Ye sab sirf aapke confirmation ke baad hona chahiye.
 
-### AI GitHub Integration Rule
-- Har task complete hone ke baad AI zaroor suggest karega: "Kaam pura ho gaya hai, isko commit aur push kar lijiye."
-- Naye feature ya task ko start karne se pehle AI nayi branch banane (e.g. `feature/dynamic-forms`) ka suggestion dega.
-- AI git commands run kar sakta hai lekin usko `SafeToAutoRun: false` rakhna hai taaki USER khud approve kare.
+### AI GitHub Integration Rule & Testing Flow (Strict Sequence)
+For every completed feature or task, the AI must strictly follow this exact 3-step sequence:
+1. **Live Test & Report:** The AI must first run an automated live test, capture proof (screenshots/animations), and give the USER explicit instructions on how they can test it themselves (URLs, mock credentials, actions).
+2. **User Verification ("Halt & Ask"):** The AI must halt and wait. The AI **CANNOT** run any git commit or push commands yet. The AI must wait for the USER to manually test and say **"OK"** or give approval.
+3. **Commit & Push Prompt:** Only after the USER says **"OK"**, the AI will ask: *"Should I commit and push this now?"*. Upon explicit user approval, the AI will execute the git commit and push commands on the correct feature branch.
+
+All Git commands (`git add`, `git commit`, `git push`) must always be configured with `SafeToAutoRun: false` so that the user has full final control in the UI.
 
 ## 7) Working order
 1. Folder setup
