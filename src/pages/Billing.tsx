@@ -60,7 +60,7 @@ export default function Billing() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter products list based on query (handles both barcode and case-insensitive names)
+  // Filter products list based on query with high-accuracy search relevance sorting
   const handleInputChange = (val: string) => {
     setBarcodeInput(val);
     if (!val.trim()) {
@@ -68,12 +68,45 @@ export default function Billing() {
       return;
     }
     const query = val.toLowerCase().trim();
-    const filtered = productsList.filter(p => 
+    
+    // 1. Filter items that contain the search query
+    const matched = productsList.filter(p => 
       p.name.toLowerCase().includes(query) || 
       p.barcode.toLowerCase().includes(query)
     );
+
+    // 2. Score and Sort by relevance (Exact prefixes first, then word starts, then middle substrings)
+    const sorted = matched.map(p => {
+      const nameLower = p.name.toLowerCase();
+      const barcodeLower = p.barcode.toLowerCase();
+      
+      let score = 0;
+      
+      // Exact starts-with match (Highest priority)
+      if (nameLower.startsWith(query) || barcodeLower.startsWith(query)) {
+        score = 3;
+      } 
+      // Match starts at the beginning of any individual word (e.g. "Chew" in "Vitamin C Chewables")
+      else if (nameLower.split(/\s+/).some(word => word.startsWith(query))) {
+        score = 2;
+      } 
+      // Substring matches in the middle of a word (e.g. "amo" in "Paracetamol") - Lowest priority
+      else {
+        score = 1;
+      }
+
+      return { ...p, score };
+    }).sort((a, b) => {
+      // Sort by score descending (highest priority matches at the top)
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+      // Secondary sort alphabetically if scores are identical
+      return a.name.localeCompare(b.name);
+    });
+
     // Limit to top 5 matching items for crisp, clean UI dropdown styling
-    setSuggestions(filtered.slice(0, 5));
+    setSuggestions(sorted.slice(0, 5));
     setActiveSuggestionIndex(0);
   };
 
