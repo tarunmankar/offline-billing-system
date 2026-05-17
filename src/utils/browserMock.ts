@@ -237,6 +237,23 @@ if (!(window as any).electronAPI) {
       expenses = expenses.filter((e: any) => e.id !== id);
       localStorage.setItem('mock_expenses', JSON.stringify(expenses));
       return true;
+    },
+    shareWhatsApp: async (phone: string, text: string) => {
+      const formattedPhone = phone.replace(/\D/g, '');
+      console.log('%c[Mock WhatsApp Share]', 'color: darkgreen; font-weight: bold;', { phone, text });
+      window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`, '_blank');
+      return true;
+    },
+    savePDF: async (htmlContent: string, invoiceNo: string) => {
+      console.log('%c[Mock Save PDF]', 'color: blue; font-weight: bold;', invoiceNo);
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice_${invoiceNo}_mock.html`;
+      link.click();
+      URL.revokeObjectURL(url);
+      return true;
     }
   };
 }

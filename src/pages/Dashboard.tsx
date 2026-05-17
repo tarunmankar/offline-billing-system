@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, ShoppingCart, Package, Users,
@@ -88,6 +89,7 @@ const S = {
 const Dashboard: React.FC = () => {
   const { config, loading: configLoading } = useConfig();
   const { user, logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
   const [stats, setStats] = useState({ salesToday: 0, itemsSold: 0, transactions: 0 });
   const isAdmin = user?.role === 'Admin';
@@ -121,23 +123,23 @@ const Dashboard: React.FC = () => {
 
   const navGroups = [
     {
-      label: 'Main',
+      label: language === 'hi' ? 'मुख्य' : 'Main',
       items: [
-        { id: 'dashboard' as TabType, icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
-        { id: 'ledger'    as TabType, icon: <BookOpen size={18} />,        label: 'Sales Ledger' },
+        { id: 'dashboard' as TabType, icon: <LayoutDashboard size={18} />, label: t('dashboard') },
+        { id: 'ledger'    as TabType, icon: <BookOpen size={18} />,        label: t('ledger') },
         ...(config?.features.barcode_scanner !== false
-          ? [{ id: 'new-bill'  as TabType, icon: <ShoppingCart size={18} />, label: 'New Bill' }] : []),
+          ? [{ id: 'new-bill'  as TabType, icon: <ShoppingCart size={18} />, label: t('newBill') }] : []),
         ...(config?.features.inventory_management
-          ? [{ id: 'inventory' as TabType, icon: <Package size={18} />, label: 'Inventory' }] : []),
-        { id: 'expenses'  as TabType, icon: <IndianRupee size={18} />,     label: 'Daily Expenses' },
-        { id: 'daybook'   as TabType, icon: <Receipt size={18} />,         label: 'Day Book' },
+          ? [{ id: 'inventory' as TabType, icon: <Package size={18} />, label: t('inventory') }] : []),
+        { id: 'expenses'  as TabType, icon: <IndianRupee size={18} />,     label: t('expenses') },
+        { id: 'daybook'   as TabType, icon: <Receipt size={18} />,         label: t('daybook') },
       ],
     },
     ...(isAdmin ? [{
-      label: 'Admin',
+      label: language === 'hi' ? 'प्रशासन' : 'Admin',
       items: [
-        ...(config?.features.user_auth ? [{ id: 'users' as TabType, icon: <Users size={18} />, label: 'Users' }] : []),
-        { id: 'settings' as TabType, icon: <SettingsIcon size={18} />, label: 'Settings' },
+        ...(config?.features.user_auth ? [{ id: 'users' as TabType, icon: <Users size={18} />, label: t('users') }] : []),
+        { id: 'settings' as TabType, icon: <SettingsIcon size={18} />, label: t('settings') },
       ],
     }] : []),
   ];
@@ -164,7 +166,7 @@ const Dashboard: React.FC = () => {
       default:
         return (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-
+ 
             {/* Greeting Banner */}
             <div style={{
               borderRadius: 20, padding: '32px 36px', position: 'relative', overflow: 'hidden',
@@ -176,47 +178,47 @@ const Dashboard: React.FC = () => {
                 <div>
                   <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Zap size={12} color="var(--primary)" />
-                    {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    {new Date().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
                   <h2 style={{ fontSize: 30, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: 10 }}>
-                    Welcome back, <span style={{ color: 'var(--primary)' }}>{user?.username || 'Operator'}</span> 👋
+                    {t('welcomeBack')}, <span style={{ color: 'var(--primary)' }}>{user?.username || 'Operator'}</span> 👋
                   </h2>
                   <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                    {config?.shop_info?.type ? config.shop_info.type.charAt(0).toUpperCase() + config.shop_info.type.slice(1) : 'Shop'} Terminal — All systems operational.
+                    {config?.shop_info?.type ? config.shop_info.type.charAt(0).toUpperCase() + config.shop_info.type.slice(1) : 'Shop'} Terminal — {t('allSystemsOperational')}.
                   </p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 600, padding: '10px 18px', borderRadius: 12, background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', flexShrink: 0 }}>
                   <WifiOff size={14} color="var(--accent-emerald)" />
-                  100% Offline
+                  {t('offlineStatus')}
                 </div>
               </div>
             </div>
-
+ 
             {/* Stat Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-              <StatCard label="Today's Revenue" value={`₹${stats.salesToday.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
-                icon={<IndianRupee size={22} />} color="var(--primary)" glow="var(--primary-glow)" subtle="var(--primary-subtle)" badge="Live" />
-              <StatCard label="Items Sold" value={stats.itemsSold.toString()}
-                icon={<ShoppingBag size={22} />} color="var(--accent-emerald)" glow="hsla(158,64%,52%,0.3)" subtle="hsla(158,64%,52%,0.1)" badge="Today" />
-              <StatCard label="Transactions" value={stats.transactions.toString()}
-                icon={<TrendingUp size={22} />} color="var(--accent-purple)" glow="hsla(262,80%,65%,0.3)" subtle="hsla(262,80%,65%,0.1)" badge="Bills" />
+              <StatCard label={t('revenueToday')} value={`₹${stats.salesToday.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                icon={<IndianRupee size={22} />} color="var(--primary)" glow="var(--primary-glow)" subtle="var(--primary-subtle)" badge={t('live')} />
+              <StatCard label={t('itemsSoldToday')} value={stats.itemsSold.toString()}
+                icon={<ShoppingBag size={22} />} color="var(--accent-emerald)" glow="hsla(158,64%,52%,0.3)" subtle="hsla(158,64%,52%,0.1)" badge={t('today')} />
+              <StatCard label={t('transactionsToday')} value={stats.transactions.toString()}
+                icon={<TrendingUp size={22} />} color="var(--accent-purple)" glow="hsla(262,80%,65%,0.3)" subtle="hsla(262,80%,65%,0.1)" badge={t('bills')} />
             </div>
-
+ 
             {/* Alerts */}
             <ExpiryAlert />
-
+ 
             {/* Config */}
             <div style={S.card}>
               <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <SettingsIcon size={15} color="var(--primary)" />
-                <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)' }}>Active Configuration</span>
+                <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)' }}>{t('activeConfig')}</span>
               </div>
               <div style={{ padding: '20px 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 {[
-                  { label: 'Tax Identifier',  value: config?.shop_info.tax_label },
-                  { label: 'Print Format',    value: config?.billing_settings.print_format },
-                  { label: 'Shop Type',       value: config?.shop_info.type },
-                  { label: 'Theme Mode',      value: config?.theme.mode },
+                  { label: t('taxIdentifier'),  value: config?.shop_info.tax_label },
+                  { label: t('printFormat'),    value: config?.billing_settings.print_format },
+                  { label: t('shopType'),       value: config?.shop_info.type },
+                  { label: t('themeMode'),      value: config?.theme.mode },
                 ].map(item => (
                   <div key={item.label} style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', borderRadius: 14, padding: '18px 20px' }}>
                     <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 8 }}>{item.label}</p>
@@ -273,7 +275,7 @@ const Dashboard: React.FC = () => {
             <div style={S.userAvatar}>{user?.username?.charAt(0).toUpperCase()}</div>
             <div style={{ overflow: 'hidden', flex: 1 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.username}</p>
-              <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '2px 8px', borderRadius: 999, background: 'var(--primary-subtle)', color: 'var(--primary)', border: '1px solid hsla(221,83%,53%,0.3)' }}>{user?.role}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '2px 8px', borderRadius: 999, background: 'var(--primary-subtle)', color: 'var(--primary)', border: '1px solid hsla(221,83%,53%,0.3)' }}>{user?.role === 'Admin' ? t('admin') : t('cashier')}</span>
             </div>
           </div>
           <button
@@ -283,7 +285,7 @@ const Dashboard: React.FC = () => {
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)'; }}
           >
             <LogOut size={18} />
-            <span>Sign Out</span>
+            <span>{t('signOut')}</span>
           </button>
         </div>
       </aside>
@@ -294,13 +296,39 @@ const Dashboard: React.FC = () => {
         <header style={S.header}>
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'capitalize', marginBottom: 4 }}>
-              {currentTab === 'new-bill' ? 'New Bill' : currentTab}
+              {currentTab === 'new-bill' ? t('newBill') : currentTab === 'ledger' ? t('ledger') : currentTab === 'inventory' ? t('inventory') : currentTab === 'expenses' ? t('expenses') : currentTab === 'daybook' ? t('daybook') : currentTab === 'settings' ? t('settings') : currentTab}
             </h2>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              {config?.shop_info.name} — {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+              {config?.shop_info.name} — {new Date().toLocaleTimeString(language === 'hi' ? 'hi-IN' : 'en-IN', { hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {/* Language Switcher Toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', borderRadius: 10, padding: 3, gap: 2 }}>
+              <button
+                onClick={() => setLanguage('en')}
+                style={{
+                  padding: '6px 12px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: 'none', cursor: 'pointer',
+                  background: language === 'en' ? 'var(--primary)' : 'transparent',
+                  color: language === 'en' ? 'white' : 'var(--text-secondary)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => setLanguage('hi')}
+                style={{
+                  padding: '6px 12px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: 'none', cursor: 'pointer',
+                  background: language === 'hi' ? 'var(--primary)' : 'transparent',
+                  color: language === 'hi' ? 'white' : 'var(--text-secondary)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                हिन्दी
+              </button>
+            </div>
+            <div style={{ width: 1, height: 28, background: 'var(--border-subtle)' }} />
             <button style={{ position: 'relative', background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', borderRadius: 10, padding: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-secondary)' }}>
               <Bell size={18} />
               <span style={{ position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-red)' }} />
@@ -308,7 +336,7 @@ const Dashboard: React.FC = () => {
             <div style={{ width: 1, height: 28, background: 'var(--border-subtle)' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 10, background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
               <Shield size={13} color="var(--accent-emerald)" />
-              {user?.role}
+              {user?.role === 'Admin' ? t('admin') : t('cashier')}
             </div>
           </div>
         </header>

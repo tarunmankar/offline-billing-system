@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { ShoppingCart, Search, Plus, Minus, Trash2, CheckCircle } from 'lucide-react';
 import { generateReceiptHtml } from '../utils/printTemplates';
 
@@ -31,9 +32,16 @@ const renderHighlightedText = (text: string, query: string) => {
 export default function Billing() {
   const { config } = useConfig();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [barcodeInput, setBarcodeInput] = useState('');
   const [cart, setCart] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Checkout Success Modal & Sharing States
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [completedSaleInfo, setCompletedSaleInfo] = useState<any>(null);
+  const [showWhatsAppInput, setShowWhatsAppInput] = useState(false);
+  const [customerPhone, setCustomerPhone] = useState('');
   
   // Dynamic type-ahead suggestions states
   const [productsList, setProductsList] = useState<any[]>([]);
@@ -257,7 +265,7 @@ export default function Billing() {
         }))
       };
 
-      await (window as any).electronAPI.saveSale(payload);
+      const saleId = await (window as any).electronAPI.saveSale(payload);
       
       if ((window as any).electronAPI.printReceipt) {
         const format = config?.billing_settings?.print_format || 'A4';
@@ -266,17 +274,63 @@ export default function Billing() {
           await (window as any).electronAPI.printReceipt({ htmlContent, format });
         } catch (printErr) {
           console.error('Printing failed:', printErr);
-          alert('Sale saved, but printing failed. Check printer connection.');
         }
       }
 
+      setCompletedSaleInfo({
+        invoiceNo: saleId || Math.floor(1000 + Math.random() * 9000),
+        cart: [...cart],
+        totals: { ...totals }
+      });
       setCart([]);
-      alert('Sale completed and printed successfully!');
+      setShowSuccessModal(true);
     } catch (err) {
       console.error(err);
       alert('Failed to process checkout');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!completedSaleInfo) return;
+    const format = 'A4';
+    const htmlContent = generateReceiptHtml(config?.shop_info, completedSaleInfo.cart, completedSaleInfo.totals, user, format);
+    if ((window as any).electronAPI?.savePDF) {
+      const result = await (window as any).electronAPI.savePDF(htmlContent, completedSaleInfo.invoiceNo.toString());
+      if (result) alert('Invoice PDF saved successfully!');
+    }
+  };
+
+  const handlePrintAgain = async () => {
+    if (!completedSaleInfo) return;
+    if ((window as any).electronAPI?.printReceipt) {
+      const format = config?.billing_settings?.print_format || 'A4';
+      const htmlContent = generateReceiptHtml(config?.shop_info, completedSaleInfo.cart, completedSaleInfo.totals, user, format as 'thermal' | 'A4');
+      await (window as any).electronAPI.printReceipt({ htmlContent, format });
+    }
+  };
+
+  const handleShareWhatsApp = async () => {
+    if (!customerPhone.trim() || !completedSaleInfo) return;
+    const phone = customerPhone.trim();
+    const lines = [
+      `🧾 INVOICE RECEIPT #INV-2026-${completedSaleInfo.invoiceNo}`,
+      `Shop: ${config?.shop_info?.name || 'BILLING PRO'}`,
+      `Date: ${new Date().toLocaleString('en-IN')}`,
+      `---------------------------------`,
+      ...completedSaleInfo.cart.map((item: any) => `${item.name} x ${item.quantity}: ₹${(item.quantity * item.rate).toFixed(2)}`),
+      `---------------------------------`,
+      `Taxable Amount: ₹${completedSaleInfo.totals.taxableAmount.toFixed(2)}`,
+      `Tax Total: ₹${completedSaleInfo.totals.taxTotal.toFixed(2)}`,
+      `GRAND TOTAL: ₹${completedSaleInfo.totals.grandTotal.toFixed(2)}`,
+      `---------------------------------`,
+      `Thank you for shopping!`
+    ];
+    const text = lines.join('\n');
+    if ((window as any).electronAPI?.shareWhatsApp) {
+      await (window as any).electronAPI.shareWhatsApp(phone, text);
+      alert('WhatsApp sharing launched successfully!');
     }
   };
 
@@ -417,6 +471,7 @@ export default function Billing() {
           </div>
         </div>
 
+        {/* Checkout Button */}
         <button 
           onClick={handleCheckout}
           disabled={cart.length === 0 || isProcessing}
@@ -445,16 +500,143 @@ export default function Billing() {
                 <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Processing...
+              {t('initializing')}
             </span>
           ) : (
             <>
               <CheckCircle size={22} />
-              Checkout (F12)
+              {t('checkoutBtn')}
             </>
           )}
         </button>
       </div>
+
+      {/* Checkout Success Actions Dialog Overlay */}
+      {showSuccessModal && completedSaleInfo && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }}>
+          <div style={{
+            width: '100%', maxWidth: 440, background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-strong)', borderRadius: 24,
+            padding: 32, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: 24
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: '50%', background: 'hsla(158,64%,52%,0.1)',
+                border: '1px solid hsla(158,64%,52%,0.2)', color: 'var(--accent-emerald)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <CheckCircle size={32} />
+              </div>
+              <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{t('checkoutSuccess')}</h3>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                Invoice Number: <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>#INV-2026-{completedSaleInfo.invoiceNo}</span>
+              </p>
+            </div>
+
+            <div style={{
+              background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)',
+              borderRadius: 16, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}>
+                <span>Net Payable:</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-primary)' }}>₹{completedSaleInfo.totals.grandTotal.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}>
+                <span>Items Count:</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{completedSaleInfo.cart.length} items</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <button
+                onClick={handleDownloadPDF}
+                style={{
+                  width: '100%', padding: 12, borderRadius: 10, background: 'var(--bg-overlay)',
+                  border: '1px solid var(--border-subtle)', color: 'var(--text-primary)',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s'
+                }}
+              >
+                {t('downloadPDF')}
+              </button>
+
+              <button
+                onClick={handlePrintAgain}
+                style={{
+                  width: '100%', padding: 12, borderRadius: 10, background: 'var(--bg-overlay)',
+                  border: '1px solid var(--border-subtle)', color: 'var(--text-primary)',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s'
+                }}
+              >
+                {t('printThermal')}
+              </button>
+
+              <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '8px 0' }} />
+
+              {/* WhatsApp Block */}
+              {!showWhatsAppInput ? (
+                <button
+                  onClick={() => setShowWhatsAppInput(true)}
+                  style={{
+                    width: '100%', padding: 12, borderRadius: 10, background: 'var(--primary-subtle)',
+                    border: '1px solid var(--border-glow)', color: 'var(--primary)',
+                    fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s'
+                  }}
+                >
+                  {t('whatsAppShare')}
+                </button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+                    {t('enterPhonePrompt')}
+                  </label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="text"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.currentTarget.value)}
+                      placeholder={t('whatsappPlaceholder')}
+                      style={{
+                        flex: 1, fontSize: 13, padding: '10px 12px', borderRadius: 10,
+                        border: '1px solid var(--border-subtle)', background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)', outline: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={handleShareWhatsApp}
+                      style={{
+                        padding: '10px 16px', borderRadius: 10, background: 'var(--primary)',
+                        color: 'white', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 13
+                      }}
+                    >
+                      Send
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => {
+                setShowSuccessModal(false);
+                setCompletedSaleInfo(null);
+                setShowWhatsAppInput(false);
+                setCustomerPhone('');
+              }}
+              style={{
+                width: '100%', padding: 12, borderRadius: 10, background: 'var(--primary)',
+                color: 'white', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer',
+                textAlign: 'center', boxShadow: 'var(--shadow-button)'
+              }}
+            >
+              {t('closeBtn')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

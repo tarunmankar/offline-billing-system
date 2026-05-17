@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { motion } from 'framer-motion';
 import { IndianRupee, PlusCircle, Trash2, Calendar, FileText, Sparkles } from 'lucide-react';
 
@@ -9,7 +10,7 @@ const S = {
   header: { display: 'flex', alignItems: 'center', gap: 14, paddingBottom: 24, borderBottom: '1px solid var(--border-subtle)' },
   headerIcon: { width: 48, height: 48, borderRadius: 14, background: 'var(--primary-subtle)', border: '1px solid var(--border-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   grid: { display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 28, alignItems: 'flex-start' },
-  card: { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 20, padding: 24, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: 20 },
+  card: { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 20, padding: 24, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column' as const, gap: 20 },
   sectionTitle: { fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 14, margin: 0, display: 'flex', alignItems: 'center', gap: 8 },
   formGroup: { display: 'flex', flexDirection: 'column' as const, gap: 6 },
   label: { fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.05em', color: 'var(--text-secondary)' },
@@ -38,6 +39,7 @@ const CATEGORY_PILLS = ['Chai / Snacks', 'Stationery', 'Labour', 'Petrol / Commu
 
 const Expenses: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -85,7 +87,7 @@ const Expenses: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this expense?')) return;
+    if (!window.confirm(t('confirmDeleteExp'))) return;
     try {
       if ((window as any).electronAPI?.deleteExpense) {
         await (window as any).electronAPI.deleteExpense(id);
@@ -104,8 +106,8 @@ const Expenses: React.FC = () => {
           <IndianRupee size={22} color="var(--primary)" />
         </div>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Daily Expense Tracker</h2>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Record and manage all daily shop outflows and cash reconciliations.</p>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>{t('expensesTracker')}</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('expensesSub')}</p>
         </div>
       </div>
 
@@ -114,11 +116,11 @@ const Expenses: React.FC = () => {
         <form onSubmit={handleSubmit} style={S.card}>
           <h3 style={S.sectionTitle}>
             <PlusCircle size={16} color="var(--primary)" />
-            Record Outflow (Kharcha)
+            {t('recordOutflow')}
           </h3>
 
           <div style={S.formGroup}>
-            <label style={S.label}>Expense Amount (₹)</label>
+            <label style={S.label}>{t('expenseAmount')}</label>
             <input
               type="number"
               value={amount}
@@ -131,7 +133,7 @@ const Expenses: React.FC = () => {
           </div>
 
           <div style={S.formGroup}>
-            <label style={S.label}>Outflow Description</label>
+            <label style={S.label}>{t('outflowDescription')}</label>
             <input
               type="text"
               value={description}
@@ -143,7 +145,7 @@ const Expenses: React.FC = () => {
           </div>
 
           <div style={S.formGroup}>
-            <label style={S.label}>Quick Presets</label>
+            <label style={S.label}>{t('quickPresets')}</label>
             <div style={S.pillContainer}>
               {CATEGORY_PILLS.map((pill) => (
                 <button
@@ -160,7 +162,7 @@ const Expenses: React.FC = () => {
 
           <button type="submit" disabled={isSubmitting} style={S.button}>
             <Sparkles size={14} />
-            {isSubmitting ? 'Recording Outflow...' : 'Record Outflow'}
+            {isSubmitting ? t('recording') : t('recordBtn')}
           </button>
         </form>
 
@@ -168,7 +170,7 @@ const Expenses: React.FC = () => {
         <div style={S.card}>
           <h3 style={S.sectionTitle}>
             <FileText size={16} color="var(--primary)" />
-            Recent Daily Activity Logs
+            {t('recentActivity')}
           </h3>
 
           {loading ? (
@@ -176,18 +178,18 @@ const Expenses: React.FC = () => {
           ) : expenses.length === 0 ? (
             <div style={{ padding: '64px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
               <IndianRupee size={36} style={{ marginBottom: 12, opacity: 0.3 }} />
-              <p style={{ fontSize: 15, fontWeight: 500 }}>No Outflows Recorded</p>
-              <p style={{ fontSize: 12, marginTop: 4 }}>Complete the form on the left to record your first daily shop expense.</p>
+              <p style={{ fontSize: 15, fontWeight: 500 }}>{t('noOutflows')}</p>
+              <p style={{ fontSize: 12, marginTop: 4 }}>{t('noOutflowsSub')}</p>
             </div>
           ) : (
             <div style={S.tableContainer}>
               <table style={S.table}>
                 <thead>
                   <tr>
-                    <th style={S.th}>Timestamp</th>
-                    <th style={S.th}>Description</th>
-                    <th style={S.th}>Recorded By</th>
-                    <th style={{ ...S.th, textAlign: 'right' }}>Amount</th>
+                    <th style={S.th}>{t('timestamp')}</th>
+                    <th style={S.th}>{t('description')}</th>
+                    <th style={S.th}>{t('recordedBy')}</th>
+                    <th style={{ ...S.th, textAlign: 'right' }}>{t('amount')}</th>
                     {user?.role === 'Admin' && <th style={{ ...S.th, width: 50 }}></th>}
                   </tr>
                 </thead>

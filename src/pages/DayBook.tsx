@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useConfig } from '../context/ConfigContext';
+import { useLanguage } from '../context/LanguageContext';
 import { IndianRupee, TrendingUp, TrendingDown, ClipboardList, Printer, Calendar } from 'lucide-react';
 
 /* ── Inline Design System Styles ────────────────────────── */
@@ -43,7 +44,7 @@ const S = {
   }),
   statLabel: { fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: 8 },
   statValue: { fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', lineHeight: 1 },
-  mainCard: { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 20, padding: 24, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: 20 },
+  mainCard: { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 20, padding: 24, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column' as const, gap: 20 },
   sectionTitle: { fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 14, margin: 0, display: 'flex', alignItems: 'center', gap: 8 },
   tableContainer: { overflowX: 'auto' as const },
   table: { width: '100%', borderCollapse: 'collapse' as const, textAlign: 'left' as const },
@@ -53,6 +54,7 @@ const S = {
 
 const DayBook: React.FC = () => {
   const { config } = useConfig();
+  const { t } = useLanguage();
   const [selectedDate, setSelectedDate] = useState(() => {
     const d = new Date();
     // Return standard YYYY-MM-DD
@@ -188,8 +190,8 @@ const DayBook: React.FC = () => {
             <ClipboardList size={22} color="var(--primary)" />
           </div>
           <div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>End-of-Day Day Book</h2>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Audit and reconcile daily cash counter inflows, outflows, and net galla margins.</p>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>{t('daybookTitle')}</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('daybookSub')}</p>
           </div>
         </div>
 
@@ -202,7 +204,7 @@ const DayBook: React.FC = () => {
           />
           <button onClick={handlePrintDayBook} style={S.printBtn}>
             <Printer size={15} />
-            Print Ledger (ESC/POS)
+            {t('printLedger')}
           </button>
         </div>
       </div>
@@ -215,7 +217,7 @@ const DayBook: React.FC = () => {
           <div style={S.statIcon('var(--primary-subtle)', 'var(--primary)')}>
             <TrendingUp size={20} />
           </div>
-          <p style={S.statLabel}>Total Cash Inflow (Sales)</p>
+          <p style={S.statLabel}>{t('totalInflow')}</p>
           <p style={S.statValue}>₹{totalInflows.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
         </div>
 
@@ -225,7 +227,7 @@ const DayBook: React.FC = () => {
           <div style={S.statIcon('rgba(239, 68, 68, 0.1)', 'var(--accent-red)')}>
             <TrendingDown size={20} />
           </div>
-          <p style={S.statLabel}>Total Outflow (Expenses)</p>
+          <p style={S.statLabel}>{t('totalOutflow')}</p>
           <p style={S.statValue}>₹{totalOutflows.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
         </div>
 
@@ -235,7 +237,7 @@ const DayBook: React.FC = () => {
           <div style={S.statIcon(netGalla >= 0 ? 'hsla(158,64%,52%,0.1)' : 'rgba(239, 68, 68, 0.1)', netGalla >= 0 ? 'var(--accent-emerald)' : 'var(--accent-red)')}>
             <IndianRupee size={20} />
           </div>
-          <p style={S.statLabel}>Net Counter Cash Galla</p>
+          <p style={S.statLabel}>{t('netGalla')}</p>
           <p style={{ ...S.statValue, color: netGalla >= 0 ? 'var(--accent-emerald)' : 'var(--accent-red)' }}>
             ₹{netGalla.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </p>
@@ -246,7 +248,7 @@ const DayBook: React.FC = () => {
       <div style={S.mainCard}>
         <h3 style={S.sectionTitle}>
           <ClipboardList size={16} color="var(--primary)" />
-          Chronological Audit Ledger Logs — {new Date(selectedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+          {t('auditLogs')} — {new Date(selectedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
         </h3>
 
         {loading ? (
@@ -254,19 +256,19 @@ const DayBook: React.FC = () => {
         ) : unifiedLogs.length === 0 ? (
           <div style={{ padding: '64px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
             <Calendar size={36} style={{ marginBottom: 12, opacity: 0.3 }} />
-            <p style={{ fontSize: 15, fontWeight: 500 }}>No Terminal Activity on this Date</p>
-            <p style={{ fontSize: 12, marginTop: 4 }}>Complete checkout sales or record outflows on this date to update register books.</p>
+            <p style={{ fontSize: 15, fontWeight: 500 }}>{t('noDaybookLogs')}</p>
+            <p style={{ fontSize: 12, marginTop: 4 }}>{t('noDaybookLogsSub')}</p>
           </div>
         ) : (
           <div style={S.tableContainer}>
             <table style={S.table}>
               <thead>
                 <tr>
-                  <th style={S.th}>Timestamp</th>
-                  <th style={S.th}>Type</th>
-                  <th style={S.th}>Description / Event</th>
-                  <th style={S.th}>Handled By</th>
-                  <th style={{ ...S.th, textAlign: 'right' }}>Outflow (-) / Inflow (+)</th>
+                  <th style={S.th}>{t('timestamp')}</th>
+                  <th style={S.th}>{t('type')}</th>
+                  <th style={S.th}>{t('event')}</th>
+                  <th style={S.th}>{t('recordedBy')}</th>
+                  <th style={{ ...S.th, textAlign: 'right' }}>{t('outflowInflow')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -288,7 +290,7 @@ const DayBook: React.FC = () => {
                         color: log.type === 'sale' ? 'var(--accent-emerald)' : 'var(--accent-red)',
                         border: log.type === 'sale' ? '1px solid hsla(158,64%,52%,0.2)' : '1px solid rgba(239, 68, 68, 0.2)'
                       }}>
-                        {log.type}
+                        {log.type === 'sale' ? t('live') : 'Kharcha'}
                       </span>
                     </td>
                     <td style={{ ...S.td, fontWeight: 600 }}>{log.description}</td>

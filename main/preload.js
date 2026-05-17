@@ -24,4 +24,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getExpenses: () => ipcRenderer.invoke('get-expenses'),
   addExpense: (expense) => ipcRenderer.invoke('add-expense', expense),
   deleteExpense: (id) => ipcRenderer.invoke('delete-expense', id),
+  // Sharing
+  shareWhatsApp: (phone, text) => ipcRenderer.invoke('share:whatsapp', { phone, text }),
+  savePDF: (htmlContent, invoiceNo) => ipcRenderer.invoke('save:pdf', { htmlContent, invoiceNo }),
 });
