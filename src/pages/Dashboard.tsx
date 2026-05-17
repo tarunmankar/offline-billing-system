@@ -5,6 +5,7 @@ import { LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Shield
 import DynamicForm from '../components/DynamicForm';
 import Inventory from './Inventory';
 import Billing from './Billing';
+import ExpiryAlert from '../components/ExpiryAlert';
 
 const Dashboard: React.FC = () => {
   const { config, loading: configLoading } = useConfig();
@@ -50,6 +51,11 @@ const Dashboard: React.FC = () => {
               <StatCard title="Today's Sales" value="₹ 12,450" change="+12%" />
               <StatCard title="Items Sold" value="45" change="+5%" />
               <StatCard title="Active Customers" value="28" change="+2%" />
+            </div>
+
+            {/* Active Shelf Alerts */}
+            <div className="mt-8">
+              <ExpiryAlert />
             </div>
 
             {/* Dynamic Config Context Check */}

@@ -54,8 +54,8 @@ This task tracker lists the development pipeline for the **Offline Billing Syste
 - [x] **Native Printing Interface (`PrintManager.ts`):**
   - [x] Integrate thermal printing mechanisms (ESC/POS) using direct printer driver links.
   - [x] Design background window standard print models for beautiful A4 layouts.
-- [ ] **Inventory Control Alerts:**
-  - [ ] Code notification banners warning operators of near-expiry inventory.
+- [x] **Inventory Control Alerts:**
+  - [x] Code notification banners warning operators of near-expiry inventory.
 
 ---
 
