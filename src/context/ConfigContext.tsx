@@ -45,10 +45,16 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     fetchConfig();
   }, []);
 
-  // Proactively bind configuration theme color dynamically to document stylesheet
+  // Proactively bind configuration theme color and mode dynamically to document root
   useEffect(() => {
     if (config?.theme?.primary_color) {
       document.documentElement.style.setProperty('--primary', config.theme.primary_color);
+    }
+    
+    if (config?.theme?.mode === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
     }
   }, [config]);
 

@@ -1,4 +1,3 @@
-// Client-side HMR cache invalidation trace
 import React, { useState } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
@@ -18,16 +17,16 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 font-sans text-slate-100">
+    <div className="flex h-screen w-screen overflow-hidden theme-bg font-sans transition-theme">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
+      <aside className="w-64 theme-sidebar border-r flex flex-col justify-between shrink-0 transition-theme">
         <div>
           {/* Shop Header */}
-          <div className="p-6 border-b border-slate-800">
-            <h1 className="text-xl font-bold text-white tracking-tight truncate">
+          <div className="p-6 border-b theme-border transition-theme">
+            <h1 className="text-xl font-bold text-[var(--text-color)] tracking-tight truncate transition-theme">
               {config?.shop_info.name || 'Billing Pro'}
             </h1>
-            <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest font-semibold">
+            <p className="text-xs theme-text-secondary mt-1 uppercase tracking-widest font-semibold transition-theme">
               {config?.shop_info.type}
             </p>
           </div>
@@ -50,14 +49,14 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Sidebar Footer Operations */}
-        <div className="p-4 border-t border-slate-800 space-y-1.5 bg-slate-950/40">
+        <div className="p-4 border-t theme-border space-y-1.5 bg-black/5 transition-theme">
           {isAdmin && (
             <NavItem icon={<Settings size={20} />} label="Settings" />
           )}
           
           <button 
             onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all cursor-pointer font-medium text-sm"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg theme-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-theme cursor-pointer font-medium text-sm"
           >
             <LogOut size={20} />
             <span>Logout</span>
@@ -66,19 +65,19 @@ const Dashboard: React.FC = () => {
       </aside>
 
       {/* Main Content Pane */}
-      <main className="flex-1 bg-slate-950 p-8 overflow-y-auto">
-        <header className="mb-8 flex items-center justify-between border-b border-slate-800/60 pb-6">
+      <main className="flex-1 theme-bg p-8 overflow-y-auto transition-theme">
+        <header className="mb-8 flex items-center justify-between border-b theme-header-border pb-6 transition-theme">
           <div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h2 className="text-2xl font-bold flex items-center gap-2 transition-theme">
               Welcome back, {user?.username || 'Operator'}
-              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
                 <Shield size={12} />
                 {user?.role || 'Guest'}
               </span>
             </h2>
-            <p className="text-slate-400 mt-1">Here's what's happening today in your {config?.shop_info.type || 'shop'}.</p>
+            <p className="theme-text-secondary mt-1 transition-theme">Here's what's happening today in your {config?.shop_info.type || 'shop'}.</p>
           </div>
-          <div className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="text-right text-xs font-semibold theme-text-secondary uppercase tracking-wider transition-theme">
             📶 100% Offline Secured
           </div>
         </header>
@@ -91,18 +90,18 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Dynamic Config Context Check */}
-        <div className="mt-8 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg shadow-black/25">
-           <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+        <div className="mt-8 theme-card-solid border rounded-xl p-6 shadow-lg transition-theme">
+           <h3 className="text-lg font-bold mb-4 flex items-center gap-2 transition-theme">
              ⚙️ Dynamic Setup Check
            </h3>
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 bg-slate-950 rounded-lg border border-slate-800">
-                 <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Tax Identifier</p>
-                 <p className="text-white font-mono mt-1 font-bold">{config?.shop_info.tax_label}</p>
+              <div className="p-4 theme-input rounded-lg border transition-theme">
+                 <p className="text-xs theme-text-secondary opacity-80 font-semibold uppercase tracking-wider transition-theme">Tax Identifier</p>
+                 <p className="font-mono mt-1 font-bold transition-theme">{config?.shop_info.tax_label}</p>
               </div>
-              <div className="p-4 bg-slate-950 rounded-lg border border-slate-800">
-                 <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Default Invoice Print Format</p>
-                 <p className="text-white font-mono mt-1 font-bold">{config?.billing_settings.print_format}</p>
+              <div className="p-4 theme-input rounded-lg border transition-theme">
+                 <p className="text-xs theme-text-secondary opacity-80 font-semibold uppercase tracking-wider transition-theme">Default Invoice Print Format</p>
+                 <p className="font-mono mt-1 font-bold transition-theme">{config?.billing_settings.print_format}</p>
               </div>
            </div>
         </div>
@@ -125,20 +124,25 @@ const Dashboard: React.FC = () => {
 };
 
 const NavItem = ({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) => (
-  <button className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-sm font-medium ${
-    active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-  }`}>
+  <button 
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-theme text-sm font-medium cursor-pointer ${
+      active 
+        ? 'text-white shadow-lg shadow-black/10' 
+        : 'theme-text-secondary hover:bg-[var(--nav-hover)] hover:text-[var(--text-color)]'
+    }`}
+    style={active ? { backgroundColor: 'var(--primary)' } : undefined}
+  >
     {icon}
     <span>{label}</span>
   </button>
 );
 
 const StatCard = ({ title, value, change }: { title: string, value: string, change: string }) => (
-  <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-md">
-    <h3 className="text-slate-400 text-sm font-medium tracking-wide">{title}</h3>
+  <div className="theme-card-solid p-6 rounded-xl border shadow-md transition-theme">
+    <h3 className="theme-text-secondary text-sm font-medium tracking-wide transition-theme">{title}</h3>
     <div className="flex items-end gap-3 mt-2">
-      <span className="text-3xl font-bold text-white tracking-tight">{value}</span>
-      <span className="text-emerald-400 text-sm font-bold mb-1">{change}</span>
+      <span className="text-3xl font-bold tracking-tight transition-theme">{value}</span>
+      <span className="text-emerald-500 text-sm font-bold mb-1">{change}</span>
     </div>
   </div>
 );
