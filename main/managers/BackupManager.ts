@@ -31,6 +31,11 @@ export class BackupManager {
       return this.factoryReset();
     });
 
+    // Restore database IPC
+    ipcMain.handle('db:restore', async (event, backupData) => {
+      return this.restoreBackup(backupData);
+    });
+
     // Run the scheduler check on bootup
     this.scheduleAutoBackup();
   }
@@ -110,6 +115,95 @@ export class BackupManager {
 
         resolve(true);
       } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  private static restoreBackup(backupData: any): Promise<boolean> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        console.log('Restoring Database from backup payload...');
+        const db = require('../db/database').default;
+        
+        // Use a SQLite transaction to ensure absolute transactional integrity
+        const transaction = db.transaction(() => {
+          // 1. Wipe current products
+          db.prepare('DELETE FROM products').run();
+          
+          // 2. Insert backup products
+          if (backupData.products && Array.isArray(backupData.products)) {
+            const insertProduct = db.prepare(`
+              INSERT INTO products (id, barcode, name, price, stock, metadata)
+              VALUES (?, ?, ?, ?, ?, ?)
+            `);
+            for (const p of backupData.products) {
+              insertProduct.run(
+                p.id || null,
+                p.barcode || null,
+                p.name,
+                p.price,
+                p.stock,
+                typeof p.metadata === 'string' ? p.metadata : JSON.stringify(p.metadata || {})
+              );
+            }
+          }
+          
+          // 3. Wipe and restore sales if present
+          if (backupData.sales && Array.isArray(backupData.sales)) {
+            db.prepare('DELETE FROM sale_items').run();
+            db.prepare('DELETE FROM sales').run();
+            
+            const insertSale = db.prepare(`
+              INSERT INTO sales (id, user_id, total_amount, tax_total, tax_details, timestamp)
+              VALUES (?, ?, ?, ?, ?, ?)
+            `);
+            for (const s of backupData.sales) {
+              insertSale.run(
+                s.id,
+                s.user_id || 1,
+                s.total_amount,
+                s.tax_total || 0,
+                typeof s.tax_details === 'string' ? s.tax_details : JSON.stringify(s.tax_details || {}),
+                s.timestamp || new Date().toISOString()
+              );
+            }
+            
+            if (backupData.sale_items && Array.isArray(backupData.sale_items)) {
+              const insertSaleItem = db.prepare(`
+                INSERT INTO sale_items (id, sale_id, product_id, quantity, rate, tax_percent)
+                VALUES (?, ?, ?, ?, ?, ?)
+              `);
+              for (const item of backupData.sale_items) {
+                insertSaleItem.run(
+                  item.id || null,
+                  item.sale_id,
+                  item.product_id,
+                  item.quantity,
+                  item.rate,
+                  item.tax_percent || 0
+                );
+              }
+            }
+          }
+        });
+        
+        transaction();
+        
+        // 4. Wipe and restore config if present
+        if (backupData.config) {
+          const configPath = app.isPackaged
+            ? path.join(app.getPath('userData'), 'config.json')
+            : path.join(process.cwd(), 'config.json');
+          
+          fs.writeFileSync(configPath, JSON.stringify(backupData.config, null, 2));
+          console.log('Restored configurations to:', configPath);
+        }
+        
+        console.log('Database restore completed successfully!');
+        resolve(true);
+      } catch (err) {
+        console.error('Failed to restore database backup:', err);
         reject(err);
       }
     });

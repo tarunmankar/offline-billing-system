@@ -9,6 +9,7 @@ interface Config {
     print_format: string;
     round_off: boolean;
     tax_breakdown: boolean;
+    default_tax_percent?: number;
   };
 }
 

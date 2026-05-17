@@ -1,0 +1,58 @@
+{
+  "products": [
+    { "id": 1, "barcode": "1001", "name": "Paracetamol 650mg", "price": 30.0, "stock": 150, "metadata": { "batch": "PAR-22", "expiry": "2028-12-30" } },
+    { "id": 2, "barcode": "1002", "name": "Amoxicillin 500mg", "price": 115.0, "stock": 3, "metadata": { "batch": "AMX-89", "expiry": "2026-05-27" } },
+    { "id": 3, "barcode": "1003", "name": "Cetirizine 10mg", "price": 25.0, "stock": 0, "metadata": { "batch": "CET-12", "expiry": "2027-06-15" } },
+    { "id": 4, "barcode": "1004", "name": "Expired Cough Lozenges", "price": 65.0, "stock": 12, "metadata": { "batch": "COF-45", "expiry": "2026-05-02" } },
+    { "id": 5, "barcode": "1005", "name": "Aspirin 75mg", "price": 40.0, "stock": 5, "metadata": { "batch": "ASP-33", "expiry": "2027-04-10" } },
+    { "id": 6, "barcode": "1006", "name": "Ibuprofen 400mg", "price": 35.0, "stock": 250, "metadata": { "batch": "IBU-77", "expiry": "2028-09-18" } },
+    { "id": 7, "barcode": "1007", "name": "Azithromycin 500mg", "price": 145.0, "stock": 2, "metadata": { "batch": "AZI-04", "expiry": "2026-05-24" } },
+    { "id": 8, "barcode": "1008", "name": "Metformin 500mg", "price": 15.0, "stock": 500, "metadata": { "batch": "MET-88", "expiry": "2029-01-01" } },
+    { "id": 9, "barcode": "1009", "name": "Atorvastatin 10mg", "price": 95.0, "stock": 120, "metadata": { "batch": "ATO-11", "expiry": "2028-03-15" } },
+    { "id": 10, "barcode": "1010", "name": "Amlodipine 5mg", "price": 20.0, "stock": 180, "metadata": { "batch": "AML-55", "expiry": "2028-10-22" } },
+    { "id": 11, "barcode": "1011", "name": "Pantoprazole 40mg", "price": 55.0, "stock": 300, "metadata": { "batch": "PAN-62", "expiry": "2029-04-30" } },
+    { "id": 12, "barcode": "1012", "name": "Montelukast 10mg", "price": 110.0, "stock": 85, "metadata": { "batch": "MON-90", "expiry": "2028-07-05" } },
+    { "id": 13, "barcode": "1013", "name": "Multivitamin Tablets", "price": 180.0, "stock": 4, "metadata": { "batch": "MUL-13", "expiry": "2026-05-29" } },
+    { "id": 14, "barcode": "1014", "name": "B-Complex Syrup", "price": 60.0, "stock": 0, "metadata": { "batch": "BCM-72", "expiry": "2026-04-12" } },
+    { "id": 15, "barcode": "1015", "name": "Loratadine 10mg", "price": 32.0, "stock": 95, "metadata": { "batch": "LOR-09", "expiry": "2028-11-12" } },
+    { "id": 16, "barcode": "1016", "name": "Ranitidine 150mg", "price": 18.0, "stock": 15, "metadata": { "batch": "RAN-41", "expiry": "2027-02-28" } },
+    { "id": 17, "barcode": "1017", "name": "Diclofenac Gel", "price": 85.0, "stock": 45, "metadata": { "batch": "DIC-32", "expiry": "2027-10-15" } },
+    { "id": 18, "barcode": "1018", "name": "Omeprazole 20mg", "price": 48.0, "stock": 220, "metadata": { "batch": "OME-19", "expiry": "2028-08-30" } },
+    { "id": 19, "barcode": "1019", "name": "Ciprofloxacin 500mg", "price": 72.0, "stock": 8, "metadata": { "batch": "CIP-83", "expiry": "2027-12-25" } },
+    { "id": 20, "barcode": "1020", "name": "ORS Powder Sachet", "price": 12.0, "stock": 400, "metadata": { "batch": "ORS-50", "expiry": "2029-05-01" } }
+  ],
+  "config": {
+    "shop_info": {
+      "name": "Super Pharmacy 2026",
+      "type": "pharmacy",
+      "tax_label": "GST",
+      "phone": "+91 99999 88888",
+      "gstin": "27GSPRU9012A1Z3",
+      "dl_number": "DL-20B-99887",
+      "address": "101, Medical Plaza, MG Road, Mumbai",
+      "return_policy": "Medicines once sold cannot be returned or exchanged."
+    },
+    "theme": {
+      "mode": "dark",
+      "primary_color": "#3b82f6"
+    },
+    "features": {
+      "user_auth": true,
+      "barcode_scanner": true,
+      "expiry_tracking": true,
+      "thermal_printing": true,
+      "inventory_management": true,
+      "credit_ledger": true
+    },
+    "custom_fields": [
+      { "label": "Batch No", "key": "batch" },
+      { "label": "Expiry Date", "key": "expiry" }
+    ],
+    "billing_settings": {
+      "print_format": "A4",
+      "round_off": true,
+      "tax_breakdown": true,
+      "default_tax_percent": 18
+    }
+  }
+}

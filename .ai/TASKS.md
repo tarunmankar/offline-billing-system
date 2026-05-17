@@ -43,7 +43,7 @@ This task tracker lists the development pipeline for the **Offline Billing Syste
 
 ---
 
-## **Phase 4: Billing Terminal & Native Hardware Integration ⏳**
+## **Phase 4: Billing Terminal & Native Hardware Integration ✅**
 - [x] **Product Catalog CRUD System:**
   - [x] Develop data management forms for product additions, edits, and deletions.
   - [x] Serialize custom fields into the `metadata` JSON column.
@@ -59,7 +59,7 @@ This task tracker lists the development pipeline for the **Offline Billing Syste
 
 ---
 
-## **Phase 5: System Reliability & Deployment Packages ⏳**
+## **Phase 5: System Reliability & Deployment Packages ✅**
 - [x] **Daily DB Backups:**
   - [x] Program scheduled background processes copying SQLite states to a designated `backups/` directory.
 - [x] **Factory Resets:**

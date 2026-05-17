@@ -13,13 +13,7 @@ if (!(window as any).electronAPI) {
           const expiredDate = new Date();
           expiredDate.setDate(today.getDate() - 15); // 15 days ago (expired)
 
-          const initial = [
-            { id: 1, name: 'Paracetamol 500mg', price: 45.0, stock: 150, barcode: '123', metadata: '{"expiry":"2028-12-30"}' },
-            { id: 2, name: 'Amoxicillin Syrup', price: 120.0, stock: 3, barcode: '456', metadata: `{"expiry":"${nearExpiryDate.toISOString().split('T')[0]}"}` },
-            { id: 3, name: 'Vitamin C Chewables', price: 80.0, stock: 200, barcode: '789', metadata: '{"expiry":"2028-11-15"}' },
-            { id: 4, name: 'Expired Cough Lozenges', price: 65.0, stock: 12, barcode: '321', metadata: `{"expiry":"${expiredDate.toISOString().split('T')[0]}"}` },
-            { id: 5, name: 'Out of Stock Aspirin', price: 55.0, stock: 0, barcode: '654', metadata: '{}' }
-          ];
+          const initial: any[] = [];
           localStorage.setItem('mock_products', JSON.stringify(initial));
           return initial;
         }
@@ -95,7 +89,9 @@ if (!(window as any).electronAPI) {
       console.log('%c[Mock Sale Saved]', 'color: green; font-weight: bold;', payload);
       // Decrement mock stock
       let products = getMockProducts();
+      let totalQty = 0;
       for (const item of payload.items) {
+        totalQty += item.quantity;
         products = products.map((p: any) => {
           if (p.id === item.productId) {
             return { ...p, stock: Math.max(0, p.stock - item.quantity) };
@@ -104,7 +100,24 @@ if (!(window as any).electronAPI) {
         });
       }
       saveMockProducts(products);
-      return Math.floor(Math.random() * 10000);
+      
+      // Save sale to mock ledger
+      const sales = JSON.parse(localStorage.getItem('mock_sales') || '[]');
+      const newSale = {
+        id: sales.length > 0 ? Math.max(...sales.map((s: any) => s.id)) + 1 : 1,
+        date: new Date().toISOString(),
+        total_amount: payload.totalAmount,
+        items_count: totalQty,
+        user: payload.userId === 1 ? 'admin' : 'cashier',
+        tax_total: payload.taxTotal
+      };
+      sales.push(newSale);
+      localStorage.setItem('mock_sales', JSON.stringify(sales));
+      
+      return newSale.id;
+    },
+    getSales: async () => {
+      return JSON.parse(localStorage.getItem('mock_sales') || '[]');
     },
     getPrinters: async () => {
       return [

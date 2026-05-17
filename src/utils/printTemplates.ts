@@ -70,7 +70,10 @@ export const generateReceiptHtml = (
         <div class="thermal-header">
           <div class="thermal-title">${shopInfo?.name || 'BILLING PRO'}</div>
           <div class="thermal-subtitle">${shopInfo?.type || 'RETAIL TERMINAL'}</div>
-          <div style="font-size: 9px; margin-top: 2px;">GSTIN: 27AAAAA1111A1Z1</div>
+          ${shopInfo?.address ? `<div style="font-size: 9px; margin-top: 2px;">${shopInfo.address}</div>` : ''}
+          ${shopInfo?.phone ? `<div style="font-size: 9px;">Ph: ${shopInfo.phone}</div>` : ''}
+          ${shopInfo?.gstin ? `<div style="font-size: 9px; font-weight: bold; margin-top: 2px;">GSTIN: ${shopInfo.gstin}</div>` : ''}
+          ${shopInfo?.dl_number ? `<div style="font-size: 9px;">D.L. No: ${shopInfo.dl_number}</div>` : ''}
         </div>
 
         <div class="thermal-divider"></div>
@@ -90,7 +93,10 @@ export const generateReceiptHtml = (
           <tbody>
             ${cart.map(item => `
               <tr>
-                <td>${item.name}</td>
+                <td>
+                  <div>${item.name}</div>
+                  <div style="font-size: 8px; color: #555;">Exp: ${item.expiry || 'N/A'} | Batch: ${item.batch || 'N/A'}</div>
+                </td>
                 <td class="right">${item.quantity}</td>
                 <td class="right">${(item.quantity * item.rate).toFixed(2)}</td>
               </tr>
@@ -125,7 +131,7 @@ export const generateReceiptHtml = (
         <div class="thermal-double-divider"></div>
 
         <div class="thermal-footer">
-          <div class="bold">Thank You! Visit Again</div>
+          <div class="bold" style="text-transform: uppercase;">${shopInfo?.return_policy || 'Thank You! Visit Again'}</div>
           <div style="margin-top: 4px; font-size: 8px;">Powered by Billing Pro Suite</div>
         </div>
       </div>
@@ -184,6 +190,7 @@ export const generateReceiptHtml = (
       .meta-content {
         font-size: 13px;
         color: #1e293b;
+        line-height: 1.6;
       }
       .invoice-table {
         width: 100%;
@@ -251,7 +258,7 @@ export const generateReceiptHtml = (
         <div>
           <div class="brand-title">${shopInfo?.name || 'BILLING PRO'}</div>
           <div class="brand-subtitle">${shopInfo?.type || 'RETAIL STORE'}</div>
-          <div style="font-size: 12px; color: #64748b; margin-top: 8px;">GSTIN: 27AAAAA1111A1Z1</div>
+          ${shopInfo?.gstin ? `<div style="font-size: 12px; font-weight: 600; color: #475569; margin-top: 8px;">GSTIN: ${shopInfo.gstin}</div>` : ''}
         </div>
         <div style="text-align: right;">
           <div style="font-size: 22px; font-weight: 700; color: #1e293b;">INVOICE</div>
@@ -264,9 +271,10 @@ export const generateReceiptHtml = (
         <div class="meta-card">
           <div class="meta-title">Seller Details</div>
           <div class="meta-content">
-            <strong>${shopInfo?.name || 'Billing Pro Ltd.'}</strong><br/>
-            Authorized ${shopInfo?.type || 'Store'} Outlet<br/>
-            Mumbai, Maharashtra, India
+            <strong>${shopInfo?.name || 'Billing Pro Outlet'}</strong><br/>
+            ${shopInfo?.address || 'Physical Store Address Not Set'}<br/>
+            ${shopInfo?.phone ? `Contact: ${shopInfo.phone}<br/>` : ''}
+            ${shopInfo?.dl_number ? `D.L. Number: <strong>${shopInfo.dl_number}</strong><br/>` : ''}
           </div>
         </div>
         <div class="meta-card">
@@ -284,6 +292,7 @@ export const generateReceiptHtml = (
           <tr>
             <th style="width: 5%; border-top-left-radius: 6px;">#</th>
             <th style="text-align: left;">Item Description</th>
+            <th class="right" style="width: 20%;">Batch & Expiry</th>
             <th class="right" style="width: 15%;">Rate</th>
             <th class="right" style="width: 10%;">Qty</th>
             <th class="right" style="width: 15%;">Tax %</th>
@@ -294,7 +303,14 @@ export const generateReceiptHtml = (
           ${cart.map((item, i) => `
             <tr>
               <td>${i + 1}</td>
-              <td style="font-weight: 600;">${item.name}</td>
+              <td>
+                <div style="font-weight: 600; color: #1e293b;">${item.name}</div>
+                ${item.barcode ? `<div style="font-size: 10px; color: #64748b;">Code: ${item.barcode}</div>` : ''}
+              </td>
+              <td class="right" style="font-family: monospace; color: #475569;">
+                <div>B: ${item.batch || 'N/A'}</div>
+                <div style="font-size: 11px; color: #64748b;">E: ${item.expiry || 'N/A'}</div>
+              </td>
               <td class="right">₹${item.rate.toFixed(2)}</td>
               <td class="right">${item.quantity}</td>
               <td class="right">${item.taxPercent}%</td>
@@ -324,7 +340,9 @@ export const generateReceiptHtml = (
       </div>
 
       <div class="footer-note">
-        <div style="font-weight: bold; margin-bottom: 4px;">Thank you for your business!</div>
+        <div style="font-weight: bold; color: #475569; margin-bottom: 6px; text-transform: uppercase;">
+          ${shopInfo?.return_policy || 'Thank you for your business!'}
+        </div>
         <div>This is a computer-generated invoice and requires no physical signature.</div>
       </div>
     </div>

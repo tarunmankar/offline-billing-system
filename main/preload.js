@@ -19,4 +19,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Database Operations
   backupDatabase: () => ipcRenderer.invoke('db:backup'),
   resetDatabase: () => ipcRenderer.invoke('db:reset'),
+  restoreDatabase: (backupData) => ipcRenderer.invoke('db:restore', backupData),
 });

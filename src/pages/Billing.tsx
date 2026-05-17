@@ -110,8 +110,7 @@ export default function Billing() {
       if (nameLower.startsWith(query) || barcodeLower.startsWith(query)) {
         score = 3;
       } 
-      // Match starts at the beginning of any individual word (e.g. "Chew" in "Vitamin C Chewables")
-      else if (nameLower.split(/\s+/).some(word => word.startsWith(query))) {
+      else if (nameLower.split(/\s+/).some((word: string) => word.startsWith(query))) {
         score = 2;
       } 
       // Substring matches in the middle of a word (e.g. "amo" in "Paracetamol") - Lowest priority

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings as SettingsIcon, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Users, Settings as SettingsIcon, LogOut, Shield, BookOpen } from 'lucide-react';
 import DynamicForm from '../components/DynamicForm';
 import Inventory from './Inventory';
 import Billing from './Billing';
+import SalesLedger from './SalesLedger';
 import ExpiryAlert from '../components/ExpiryAlert';
 import Settings from './Settings';
 
@@ -12,10 +13,27 @@ const Dashboard: React.FC = () => {
   const { config, loading: configLoading } = useConfig();
   const { user, logout } = useAuth();
   
-  const [currentTab, setCurrentTab] = useState<'dashboard' | 'new-bill' | 'inventory' | 'settings' | 'users'>('dashboard');
+  const [currentTab, setCurrentTab] = useState<'dashboard' | 'new-bill' | 'inventory' | 'settings' | 'users' | 'ledger'>('dashboard');
   const [formValues, setFormValues] = useState<Record<string, string | number>>({});
+  const [stats, setStats] = useState({ salesToday: 0, itemsSold: 0 });
 
   const isAdmin = user?.role === 'Admin';
+
+  React.useEffect(() => {
+    const fetchStats = async () => {
+      if ((window as any).electronAPI?.getSales) {
+        const sales = await (window as any).electronAPI.getSales();
+        const today = new Date().toDateString();
+        const todaysSales = sales.filter((s: any) => new Date(s.date).toDateString() === today);
+        
+        const totalAmount = todaysSales.reduce((sum: number, s: any) => sum + Number(s.total_amount), 0);
+        const totalItems = todaysSales.reduce((sum: number, s: any) => sum + Number(s.items_count), 0);
+        
+        setStats({ salesToday: totalAmount, itemsSold: totalItems });
+      }
+    };
+    fetchStats();
+  }, [currentTab]);
 
   if (configLoading) {
     return <div className="flex h-screen items-center justify-center text-white bg-slate-950">Loading config...</div>;
@@ -29,6 +47,8 @@ const Dashboard: React.FC = () => {
         return <Billing />;
       case 'settings':
         return <Settings />;
+      case 'ledger':
+        return <SalesLedger />;
       case 'users':
         return (
           <div className="theme-card-solid border rounded-xl p-8 shadow-lg transition-theme text-center max-w-2xl mx-auto mt-10">
@@ -43,9 +63,9 @@ const Dashboard: React.FC = () => {
           <>
             {/* Dashboard Stat Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard title="Today's Sales" value="₹ 12,450" change="+12%" />
-              <StatCard title="Items Sold" value="45" change="+5%" />
-              <StatCard title="Active Customers" value="28" change="+2%" />
+              <StatCard title="Today's Sales" value={`₹ ${stats.salesToday.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`} change="Live" />
+              <StatCard title="Items Sold" value={stats.itemsSold.toString()} change="Live" />
+              <StatCard title="Active Customers" value="B2C" change="Walk-In" />
             </div>
 
             {/* Active Shelf Alerts */}
@@ -109,6 +129,12 @@ const Dashboard: React.FC = () => {
               label="Dashboard" 
               active={currentTab === 'dashboard'} 
               onClick={() => setCurrentTab('dashboard')}
+            />
+            <NavItem 
+              icon={<BookOpen size={20} />} 
+              label="Sales Ledger" 
+              active={currentTab === 'ledger'} 
+              onClick={() => setCurrentTab('ledger')}
             />
             {config?.features.barcode_scanner !== false && (
               <NavItem 

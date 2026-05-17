@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useConfig } from '../context/ConfigContext';
-import { Settings as SettingsIcon, Save, Database, Trash2, ShieldAlert, Sparkles, Check } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Database, Trash2, ShieldAlert, Sparkles, Check, Upload } from 'lucide-react';
 
 export default function Settings() {
   const { config } = useConfig();
@@ -61,12 +61,61 @@ export default function Settings() {
     }
   };
 
+  const handleRestoreDB = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const confirmRestore = window.confirm('⚠️ WARNING: You are restoring a database backup.\n\nThis will completely overwrite your current inventory catalog, active settings, and sales transactions history with the backup file data. This action cannot be undone.\n\nAre you sure you want to proceed?');
+    if (!confirmRestore) {
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result as string;
+        const backupData = JSON.parse(content);
+
+        if (!backupData.products || !Array.isArray(backupData.products)) {
+          throw new Error('Invalid backup schema: Missing products list.');
+        }
+
+        const electronAPI = (window as any).electronAPI;
+        if (electronAPI && electronAPI.restoreDatabase) {
+          // Native Electron Restore
+          await electronAPI.restoreDatabase(backupData);
+        } else {
+          // Web Browser fallback restore
+          if (backupData.products) {
+            localStorage.setItem('mock_products', JSON.stringify(backupData.products));
+          }
+          if (backupData.config) {
+            localStorage.setItem('mock_config', JSON.stringify(backupData.config));
+          }
+          if (backupData.sales) {
+            localStorage.setItem('mock_sales', JSON.stringify(backupData.sales));
+          }
+        }
+
+        alert('🎉 Database successfully restored from backup! Application reloading...');
+        window.location.reload();
+      } catch (err: any) {
+        console.error(err);
+        alert(`Failed to restore backup: ${err.message || 'Invalid JSON syntax.'}`);
+      } finally {
+        e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleFactoryReset = async () => {
     const confirm1 = window.confirm('⚠️ WARNING: You are initiating a Factory Reset.\n\nThis will completely wipe your local database, sales logs, inventory, and dynamic configurations. This action CANNOT be undone.\n\nAre you sure you want to proceed?');
     if (!confirm1) return;
 
     const confirm2 = window.prompt('Type "RESET" to confirm permanent wiping of this billing terminal:');
-    if (confirm2 !== 'RESET') {
+    if (!confirm2 || confirm2.trim().toUpperCase() !== 'RESET') {
       alert('Factory reset cancelled.');
       return;
     }
@@ -128,15 +177,69 @@ export default function Settings() {
                   <option value="retail">General Retail</option>
                 </select>
               </div>
-              <div className="md:col-span-2">
+              
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1 theme-text-secondary">Contact Number</label>
+                <input 
+                  type="text" 
+                  value={formData.shop_info.phone || ''} 
+                  onChange={(e) => handleInputChange('shop_info', 'phone', e.target.value)}
+                  placeholder="e.g. +91 98765 43210"
+                  className="w-full text-sm p-2 rounded border theme-border theme-card-solid transition-theme focus:ring-1 focus:ring-primary focus:outline-none"
+                />
+              </div>
+              <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1 theme-text-secondary">Tax / VAT Label</label>
                 <input 
                   type="text" 
                   value={formData.shop_info.tax_label} 
                   onChange={(e) => handleInputChange('shop_info', 'tax_label', e.target.value)}
-                  placeholder="e.g. CGST/SGST, VAT, GST"
+                  placeholder="e.g. GST, CGST/SGST, VAT"
                   className="w-full text-sm p-2 rounded border theme-border theme-card-solid transition-theme focus:ring-1 focus:ring-primary focus:outline-none"
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1 theme-text-secondary">GSTIN Number</label>
+                <input 
+                  type="text" 
+                  value={formData.shop_info.gstin || ''} 
+                  onChange={(e) => handleInputChange('shop_info', 'gstin', e.target.value)}
+                  placeholder="e.g. 27AAAAA1111A1Z1"
+                  className="w-full text-sm p-2 rounded border theme-border theme-card-solid transition-theme focus:ring-1 focus:ring-primary focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1 theme-text-secondary">Drug License (D.L.) Number</label>
+                <input 
+                  type="text" 
+                  value={formData.shop_info.dl_number || ''} 
+                  onChange={(e) => handleInputChange('shop_info', 'dl_number', e.target.value)}
+                  placeholder="e.g. DL-20B-12345, DL-21B-12345"
+                  className="w-full text-sm p-2 rounded border theme-border theme-card-solid transition-theme focus:ring-1 focus:ring-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1 theme-text-secondary">Detailed Address (Prints in Header)</label>
+                <textarea 
+                  value={formData.shop_info.address || ''} 
+                  onChange={(e) => handleInputChange('shop_info', 'address', e.target.value)}
+                  placeholder="Enter complete physical store location"
+                  rows={2}
+                  className="w-full text-sm p-2 rounded border theme-border theme-card-solid transition-theme focus:ring-1 focus:ring-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1 theme-text-secondary">Bill Footer Terms / Disclaimer / Return Policy</label>
+                <input 
+                  type="text" 
+                  value={formData.shop_info.return_policy || ''} 
+                  onChange={(e) => handleInputChange('shop_info', 'return_policy', e.target.value)}
+                  placeholder="e.g. Medicines once sold cannot be returned."
+                  className="w-full text-sm p-2 rounded border theme-border theme-card-solid transition-theme focus:ring-1 focus:ring-primary focus:outline-none"
                 />
               </div>
             </div>
@@ -306,6 +409,24 @@ export default function Settings() {
               <Sparkles size={14} className={isBackingUp ? 'animate-pulse' : ''} />
               {isBackingUp ? 'Creating Stamped Copy...' : 'Backup SQLite Database'}
             </button>
+
+            <div className="border-t theme-border pt-4 mt-2">
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 theme-text-secondary">Restore Backup (.json)</label>
+              <input 
+                type="file" 
+                accept=".json"
+                onChange={handleRestoreDB}
+                className="hidden"
+                id="restore-db-upload"
+              />
+              <label
+                htmlFor="restore-db-upload"
+                className="w-full py-2.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold text-xs shadow transition-all flex items-center justify-center gap-2 cursor-pointer text-center"
+              >
+                <Upload size={14} />
+                Upload & Restore Backup File
+              </label>
+            </div>
           </div>
 
           {/* Wiping & Factory Resets */}
