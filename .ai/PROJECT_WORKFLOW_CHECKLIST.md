@@ -94,6 +94,11 @@ AI ko direct ye kaam automatically nahi karna chahiye:
 
 Ye sab sirf aapke confirmation ke baad hona chahiye.
 
+### AI GitHub Integration Rule
+- Har task complete hone ke baad AI zaroor suggest karega: "Kaam pura ho gaya hai, isko commit aur push kar lijiye."
+- Naye feature ya task ko start karne se pehle AI nayi branch banane (e.g. `feature/dynamic-forms`) ka suggestion dega.
+- AI git commands run kar sakta hai lekin usko `SafeToAutoRun: false` rakhna hai taaki USER khud approve kare.
+
 ## 7) Working order
 1. Folder setup
 2. `.ai/` files banana

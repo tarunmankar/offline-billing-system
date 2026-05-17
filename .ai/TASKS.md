@@ -33,7 +33,7 @@ This task tracker lists the development pipeline for the **Offline Billing Syste
 ## **Phase 3: Dynamic UI Shell & Custom Field Engine 🚧**
 - [ ] **Dynamic Navigation Sidebar:**
   - [x] Design Sidebar component responsive to toggled settings flags (`config.features`).
-  - [ ] Hide/Show administrative settings panels based on user role (`Admin` vs. `Cashier`).
+  - [x] Hide/Show administrative settings panels based on user role (`Admin` vs. `Cashier`).
 - [ ] **Dynamic Form Renderer (`DynamicForm.tsx`):**
   - [ ] Build a generic component that parses the `config.custom_fields` array.
   - [ ] Dynamically render corresponding input fields (e.g. text inputs for `Batch No`, date pickers for `Expiry`).
