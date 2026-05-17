@@ -1,12 +1,15 @@
 // Client-side HMR cache invalidation trace
-import React from 'react';
+import React, { useState } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Shield } from 'lucide-react';
+import DynamicForm from '../components/DynamicForm';
 
 const Dashboard: React.FC = () => {
   const { config, loading: configLoading } = useConfig();
   const { user, logout } = useAuth();
+  
+  const [formValues, setFormValues] = useState<Record<string, string | number>>({});
 
   const isAdmin = user?.role === 'Admin';
 
@@ -103,6 +106,19 @@ const Dashboard: React.FC = () => {
               </div>
            </div>
         </div>
+
+        {/* Dynamic Form Preview */}
+        {config?.custom_fields && config.custom_fields.length > 0 && (
+          <div className="mt-8 mb-4">
+            <DynamicForm 
+              fields={config.custom_fields as any}
+              values={formValues}
+              onChange={(key, value) => setFormValues(prev => ({ ...prev, [key]: value }))}
+              title="Dynamic Config Fields (Preview)"
+              description="These fields are instantly generated strictly from your config.json custom_fields array."
+            />
+          </div>
+        )}
       </main>
     </div>
   );
