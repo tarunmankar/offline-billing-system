@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
-import { ShoppingCart, Search, Plus, Minus, Trash2, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Search, Plus, Minus, Trash2, CheckCircle, Printer } from 'lucide-react';
+import { generateReceiptHtml } from '../utils/printTemplates';
 
 export default function Billing() {
   const { config } = useConfig();
@@ -124,8 +125,20 @@ export default function Billing() {
 
       await (window as any).electronAPI.saveSale(payload);
       
+      // Trigger Printing if in Electron
+      if ((window as any).electronAPI.printReceipt) {
+        const format = config?.billing_settings?.print_format || 'A4';
+        const htmlContent = generateReceiptHtml(config?.shop_info, cart, totals, user, format as 'thermal' | 'A4');
+        try {
+          await (window as any).electronAPI.printReceipt({ htmlContent, format });
+        } catch (printErr) {
+          console.error('Printing failed:', printErr);
+          alert('Sale saved, but printing failed. Check printer connection.');
+        }
+      }
+
       setCart([]);
-      alert('Sale completed successfully!');
+      alert('Sale completed and printed successfully!');
     } catch (err) {
       console.error(err);
       alert('Failed to process checkout');
