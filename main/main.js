@@ -1,11 +1,13 @@
-// Dynamic programmatic ts-node registration to bypass Node ESM hooks conflicts in Electron main process
+// Dynamic programmatic ts-node registration, skipping React's tsconfig.json to prevent compilation conflicts
 require('ts-node').register({
   transpileOnly: true,
+  skipProject: true, // Completely isolates Electron Main from React tsconfig.json rules
   compilerOptions: {
     module: 'CommonJS',
     target: 'ES2022',
     allowSyntheticDefaultImports: true,
-    esModuleInterop: true
+    esModuleInterop: true,
+    skipLibCheck: true
   }
 });
 
