@@ -3,7 +3,8 @@ export const generateReceiptHtml = (
   cart: any[], 
   totals: any, 
   user: any, 
-  format: 'thermal' | 'A4'
+  format: 'thermal' | 'A4',
+  customerInfo?: { name?: string; phone?: string }
 ) => {
   const date = new Date().toLocaleString('en-IN', { hour12: true });
   const invoiceNo = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -80,6 +81,8 @@ export const generateReceiptHtml = (
         <div>Date: ${date}</div>
         <div>Receipt ID: ${txnId}</div>
         <div>Cashier: ${user?.username || 'Admin'}</div>
+        ${customerInfo?.name ? `<div>Cust: ${customerInfo.name}</div>` : ''}
+        ${customerInfo?.phone ? `<div>Phone: ${customerInfo.phone}</div>` : ''}
         <div class="thermal-divider"></div>
 
         <table class="thermal-table">
@@ -280,7 +283,8 @@ export const generateReceiptHtml = (
         <div class="meta-card">
           <div class="meta-title">Billing Info</div>
           <div class="meta-content">
-            <strong>B2C Customer / Walk-In</strong><br/>
+            <strong>${customerInfo?.name ? customerInfo.name : 'B2C Customer / Walk-In'}</strong><br/>
+            ${customerInfo?.phone ? `Phone: <strong>${customerInfo.phone}</strong><br/>` : ''}
             Cashier: ${user?.username || 'Admin'}<br/>
             Status: Fully Paid (Cash/UPI)
           </div>

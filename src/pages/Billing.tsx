@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { ShoppingCart, Search, Plus, Minus, Trash2, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Search, Plus, Minus, Trash2, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { generateReceiptHtml } from '../utils/printTemplates';
 
 // Helper function to dynamically highlight matching search query substrings case-insensitively
@@ -42,6 +42,14 @@ export default function Billing() {
   const [completedSaleInfo, setCompletedSaleInfo] = useState<any>(null);
   const [showWhatsAppInput, setShowWhatsAppInput] = useState(false);
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  
+  // Toast Alert State
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const showAlrt = (type: 'success' | 'error', message: string) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 4000);
+  };
   
   // Dynamic type-ahead suggestions states
   const [productsList, setProductsList] = useState<any[]>([]);
@@ -53,8 +61,10 @@ export default function Billing() {
 
   // Focus barcode input on mount and after actions
   useEffect(() => {
-    barcodeRef.current?.focus();
-  }, [cart, isProcessing]);
+    if (!showSuccessModal && !isProcessing) {
+      barcodeRef.current?.focus();
+    }
+  }, [cart, isProcessing, showSuccessModal]);
 
   // Load all products on mount to enable ultra-fast client-side dynamic search
   useEffect(() => {
@@ -195,9 +205,18 @@ export default function Billing() {
   };
 
   const addToCart = (product: any) => {
+    if (product.stock <= 0) {
+      showAlrt('error', `Cannot add "${product.name}". Item is out of stock!`);
+      return;
+    }
+
     setCart((prev) => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
+        if (existing.quantity >= product.stock) {
+          showAlrt('error', `Cannot add more. Stock limit of ${product.stock} reached for "${product.name}"!`);
+          return prev;
+        }
         return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
       }
       const taxPercent = config?.billing_settings?.default_tax_percent || 18;
@@ -208,6 +227,10 @@ export default function Billing() {
   const updateQuantity = (id: number, delta: number) => {
     setCart(prev => prev.map(item => {
       if (item.id === id) {
+        if (delta > 0 && item.quantity >= item.stock) {
+          showAlrt('error', `Cannot increase. Stock limit of ${item.stock} reached for "${item.name}"!`);
+          return item;
+        }
         const newQ = Math.max(1, item.quantity + delta);
         return { ...item, quantity: newQ };
       }
@@ -269,7 +292,14 @@ export default function Billing() {
       
       if ((window as any).electronAPI.printReceipt) {
         const format = config?.billing_settings?.print_format || 'A4';
-        const htmlContent = generateReceiptHtml(config?.shop_info, cart, totals, user, format as 'thermal' | 'A4');
+        const htmlContent = generateReceiptHtml(
+          config?.shop_info, 
+          cart, 
+          totals, 
+          user, 
+          format as 'thermal' | 'A4',
+          { name: customerName, phone: customerPhone }
+        );
         try {
           await (window as any).electronAPI.printReceipt({ htmlContent, format });
         } catch (printErr) {
@@ -280,7 +310,8 @@ export default function Billing() {
       setCompletedSaleInfo({
         invoiceNo: saleId || Math.floor(1000 + Math.random() * 9000),
         cart: [...cart],
-        totals: { ...totals }
+        totals: { ...totals },
+        customerInfo: { name: customerName, phone: customerPhone }
       });
       setCart([]);
       setShowSuccessModal(true);
@@ -295,7 +326,14 @@ export default function Billing() {
   const handleDownloadPDF = async () => {
     if (!completedSaleInfo) return;
     const format = 'A4';
-    const htmlContent = generateReceiptHtml(config?.shop_info, completedSaleInfo.cart, completedSaleInfo.totals, user, format);
+    const htmlContent = generateReceiptHtml(
+      config?.shop_info, 
+      completedSaleInfo.cart, 
+      completedSaleInfo.totals, 
+      user, 
+      format,
+      completedSaleInfo.customerInfo
+    );
     if ((window as any).electronAPI?.savePDF) {
       const result = await (window as any).electronAPI.savePDF(htmlContent, completedSaleInfo.invoiceNo.toString());
       if (result) alert('Invoice PDF saved successfully!');
@@ -306,7 +344,14 @@ export default function Billing() {
     if (!completedSaleInfo) return;
     if ((window as any).electronAPI?.printReceipt) {
       const format = config?.billing_settings?.print_format || 'A4';
-      const htmlContent = generateReceiptHtml(config?.shop_info, completedSaleInfo.cart, completedSaleInfo.totals, user, format as 'thermal' | 'A4');
+      const htmlContent = generateReceiptHtml(
+        config?.shop_info, 
+        completedSaleInfo.cart, 
+        completedSaleInfo.totals, 
+        user, 
+        format as 'thermal' | 'A4',
+        completedSaleInfo.customerInfo
+      );
       await (window as any).electronAPI.printReceipt({ htmlContent, format });
     }
   };
@@ -335,7 +380,15 @@ export default function Billing() {
   };
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 140px)', gap: 24 }}>
+    <>
+      {alert && (
+        <div style={{ position: 'fixed', top: 24, right: 24, zIndex: 10000, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderRadius: 14, boxShadow: '0 8px 32px -4px hsla(222,47%,2%,0.6)', background: alert.type === 'success' ? 'hsla(158,50%,8%,0.97)' : 'hsla(4,50%,10%,0.97)', border: `1px solid ${alert.type === 'success' ? 'hsla(158,64%,52%,0.4)' : 'hsla(4,86%,58%,0.4)'}` }}>
+          {alert.type === 'success' ? <CheckCircle size={20} color="hsl(158,64%,52%)" /> : <AlertCircle size={20} color="hsl(4,86%,65%)" />}
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'hsl(210,40%,98%)' }}>{alert.message}</span>
+          <button onClick={() => setAlert(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(215,15%,40%)', marginLeft: 4, display: 'flex' }}><X size={15} /></button>
+        </div>
+      )}
+      <div style={{ display: 'flex', height: 'calc(100vh - 140px)', gap: 24 }}>
       {/* Left Pane: Cart & Search suggestions */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 20, overflow: 'hidden', boxShadow: 'var(--shadow-card)', transition: 'all 0.2s' }}>
         {/* Search / Barcode Input Bar with floating drop-down */}
@@ -446,6 +499,33 @@ export default function Billing() {
 
       {/* Right Pane: Totalizer */}
       <div style={{ width: 320, display: 'flex', flexDirection: 'column', gap: 16, flexShrink: 0 }}>
+        {/* Customer Information Card */}
+        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 20, padding: 20, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: 12, transition: 'all 0.2s' }}>
+          <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 10, color: 'var(--text-secondary)' }}>Customer Details (Optional)</h3>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Customer Name</label>
+            <input 
+              type="text" 
+              value={customerName} 
+              onChange={(e) => setCustomerName(e.target.value)} 
+              placeholder="e.g. Tarun Mankar" 
+              style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', borderRadius: 8, fontSize: 13, outline: 'none', color: 'var(--text-primary)', transition: 'all 0.2s' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Phone Number</label>
+            <input 
+              type="text" 
+              value={customerPhone} 
+              onChange={(e) => setCustomerPhone(e.target.value)} 
+              placeholder="e.g. 9876543210" 
+              style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', borderRadius: 8, fontSize: 13, outline: 'none', color: 'var(--text-primary)', transition: 'all 0.2s', fontFamily: 'var(--font-mono)' }}
+            />
+          </div>
+        </div>
+
         <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 20, padding: 24, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: 16, transition: 'all 0.2s' }}>
           <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 12, color: 'var(--text-secondary)' }}>Payment Summary</h3>
           
@@ -625,6 +705,7 @@ export default function Billing() {
                 setCompletedSaleInfo(null);
                 setShowWhatsAppInput(false);
                 setCustomerPhone('');
+                setCustomerName('');
               }}
               style={{
                 width: '100%', padding: 12, borderRadius: 10, background: 'var(--primary)',
@@ -638,5 +719,6 @@ export default function Billing() {
         </div>
       )}
     </div>
+    </>
   );
 }

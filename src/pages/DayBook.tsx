@@ -244,6 +244,57 @@ const DayBook: React.FC = () => {
         </div>
       </div>
 
+      {/* Day Reconciliation Ratio Graphic Card */}
+      <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 20, padding: 24, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+          📊 Counter Ratio & Outflow Analytics
+        </h3>
+        
+        {totalInflows === 0 && totalOutflows === 0 ? (
+          <div style={{ padding: '16px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+            No sales or expenses recorded today to calculate ratios.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Progress Track */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>
+                <span style={{ color: 'var(--accent-emerald)' }}>Profit / Keep Ratio ({totalInflows > 0 ? Math.max(0, Math.round(((totalInflows - totalOutflows) / totalInflows) * 100)) : 0}%)</span>
+                <span style={{ color: 'var(--accent-red)' }}>Expense / Outflow Ratio ({totalInflows > 0 ? Math.min(100, Math.round((totalOutflows / totalInflows) * 100)) : 100}%)</span>
+              </div>
+              
+              {/* Dual HSL Progress track bar */}
+              <div style={{ height: 12, borderRadius: 999, background: 'var(--bg-overlay)', border: '1px solid var(--border-subtle)', display: 'flex', overflow: 'hidden' }}>
+                <div 
+                  style={{ 
+                    width: `${totalInflows > 0 ? Math.max(0, Math.round(((totalInflows - totalOutflows) / totalInflows) * 100)) : 0}%`, 
+                    background: 'linear-gradient(90deg, hsl(158,64%,40%), hsl(158,64%,52%))',
+                    transition: 'width 0.5s ease-in-out'
+                  }} 
+                />
+                <div 
+                  style={{ 
+                    width: `${totalInflows > 0 ? Math.min(100, Math.round((totalOutflows / totalInflows) * 100)) : 100}%`, 
+                    background: 'linear-gradient(90deg, hsl(4,86%,55%), hsl(4,86%,65%))',
+                    transition: 'width 0.5s ease-in-out'
+                  }} 
+                />
+              </div>
+            </div>
+
+            {/* Subtext info */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, fontSize: 12, color: 'var(--text-secondary)', background: 'var(--bg-overlay)', padding: 14, borderRadius: 12, border: '1px solid var(--border-subtle)' }}>
+              <div style={{ lineHeight: 1.5 }}>
+                <strong>Inflow Retention:</strong> For every ₹100 taken in from sales, you kept ₹{totalInflows > 0 ? Math.max(0, ((totalInflows - totalOutflows) / totalInflows) * 100).toFixed(0) : '0'} as net cash profit today.
+              </div>
+              <div style={{ lineHeight: 1.5 }}>
+                <strong>Expense Burn:</strong> Outflows and operational cash expenses consumed {totalInflows > 0 ? ((totalOutflows / totalInflows) * 100).toFixed(0) : '100'}% of today's incoming gross revenue.
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Main Audit Logs */}
       <div style={S.mainCard}>
         <h3 style={S.sectionTitle}>

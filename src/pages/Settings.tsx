@@ -32,6 +32,28 @@ export default function Settings() {
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Phone validation
+    const phone = formData.shop_info.phone || '';
+    if (phone.trim()) {
+      const cleanPhone = phone.trim().replace(/[-\s]/g, '');
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(cleanPhone)) {
+        alert('⚠️ Invalid Phone Number!\n\nPlease enter a valid 10-digit mobile number.');
+        return;
+      }
+    }
+
+    // 2. GSTIN validation
+    const gstin = formData.shop_info.gstin || '';
+    if (gstin.trim()) {
+      const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+      if (!gstinRegex.test(gstin.trim().toUpperCase())) {
+        alert('⚠️ Invalid GSTIN Format!\n\nPlease enter a valid 15-character GSTIN (e.g. 27AAAAA1111A1Z1).');
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       await (window as any).electronAPI.updateConfig(formData);
@@ -185,8 +207,22 @@ export default function Settings() {
                   type="text" 
                   value={formData.shop_info.phone || ''} 
                   onChange={(e) => handleInputChange('shop_info', 'phone', e.target.value)}
-                  placeholder="e.g. +91 98765 43210"
-                  style={{ width: '100%', fontSize: 13, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-subtle)', background: 'var(--bg-overlay)', color: 'var(--text-primary)', outline: 'none', transition: 'all 0.2s' }}
+                  placeholder="e.g. 9876543210"
+                  style={{
+                    width: '100%',
+                    fontSize: 13,
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    border: formData.shop_info.phone?.trim()
+                      ? (/^[0-9]{10}$/.test(formData.shop_info.phone.trim().replace(/[-\s]/g, ''))
+                        ? '1px solid var(--accent-emerald)'
+                        : '1px solid var(--accent-red)')
+                      : '1px solid var(--border-subtle)',
+                    background: 'var(--bg-overlay)',
+                    color: 'var(--text-primary)',
+                    outline: 'none',
+                    transition: 'all 0.2s'
+                  }}
                 />
               </div>
               <div>
@@ -208,7 +244,21 @@ export default function Settings() {
                   value={formData.shop_info.gstin || ''} 
                   onChange={(e) => handleInputChange('shop_info', 'gstin', e.target.value)}
                   placeholder="e.g. 27AAAAA1111A1Z1"
-                  style={{ width: '100%', fontSize: 13, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-subtle)', background: 'var(--bg-overlay)', color: 'var(--text-primary)', outline: 'none', transition: 'all 0.2s' }}
+                  style={{
+                    width: '100%',
+                    fontSize: 13,
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    border: formData.shop_info.gstin?.trim() 
+                      ? (/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.shop_info.gstin.trim().toUpperCase())
+                        ? '1px solid var(--accent-emerald)'
+                        : '1px solid var(--accent-red)')
+                      : '1px solid var(--border-subtle)',
+                    background: 'var(--bg-overlay)',
+                    color: 'var(--text-primary)',
+                    outline: 'none',
+                    transition: 'all 0.2s'
+                  }}
                 />
               </div>
               <div>
