@@ -43,7 +43,7 @@ This task tracker lists the development pipeline for the **Offline Billing Syste
 
 ---
 
-## **Phase 4: Billing Terminal & Native Hardware Integration ⏳**
+## **Phase 4: Billing Terminal & Native Hardware Integration ✅**
 - [x] **Product Catalog CRUD System:**
   - [x] Develop data management forms for product additions, edits, and deletions.
   - [x] Serialize custom fields into the `metadata` JSON column.
@@ -59,13 +59,26 @@ This task tracker lists the development pipeline for the **Offline Billing Syste
 
 ---
 
-## **Phase 5: System Reliability & Deployment Packages ⏳**
+## **Phase 5: System Reliability & Deployment Packages ✅**
 - [x] **Daily DB Backups:**
   - [x] Program scheduled background processes copying SQLite states to a designated `backups/` directory.
 - [x] **Factory Resets:**
   - [x] Implement utility wiping database states and resetting configuration files back to defaults.
 - [x] **Final Distribution Packaging:**
   - [x] Test the compilation using `electron-builder` to generate a single self-contained Windows executable (`.exe`).
+
+---
+
+## **Phase 6: Tier-3 Localization & Shop Enhancements ⏳**
+- [ ] **Kharcha (Expense) & Day Book System:**
+  - [ ] Implement `expenses` SQLite table and data layer.
+  - [ ] Build `Expenses.tsx` to record daily shop outflows.
+  - [ ] Build `DayBook.tsx` for End-of-Day cash counter reconciliation.
+- [ ] **Offline Sharing & Localization:**
+  - [ ] Implement PDF generation and offline WhatsApp Web link sharing (`wa.me`).
+  - [ ] Build a robust i18n JSON dictionary for Hindi translation toggle.
+- [ ] **Return & Exchange Module:**
+  - [ ] Create UI for processing sale returns and re-adding to inventory.
 
 ---
 *Last Synchronized: 2026-05-17*

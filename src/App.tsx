@@ -1,5 +1,6 @@
 import React from 'react';
 import { ConfigProvider } from './context/ConfigContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -27,9 +28,11 @@ const MainAppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <ConfigProvider>
-      <AuthProvider>
-        <MainAppContent />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <MainAppContent />
+        </AuthProvider>
+      </LanguageProvider>
     </ConfigProvider>
   );
 };

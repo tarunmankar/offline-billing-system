@@ -7,6 +7,11 @@ export interface ConfigSchema {
     type: string;
     tax_label: string;
     logo_path: string;
+    address?: string;
+    phone?: string;
+    gstin?: string;
+    dl_number?: string;
+    return_policy?: string;
   };
   theme: {
     mode: string;
@@ -36,10 +41,15 @@ export class ConfigManager {
   private getFallbackConfig(): ConfigSchema {
     return {
       shop_info: {
-        name: 'Billing Pro Fallback',
-        type: 'general',
-        tax_label: 'GST/VAT',
-        logo_path: 'assets/logo.png'
+        name: 'Super Pharmacy 2026',
+        type: 'pharmacy',
+        tax_label: 'GST',
+        logo_path: 'assets/logo.png',
+        address: '102, Galaxy Heights, Linking Road, Bandra West, Mumbai - 400050',
+        phone: '+91 98765 43210',
+        gstin: '27AAAAA1111A1Z1',
+        dl_number: 'DL-20B-123456, DL-21B-654321',
+        return_policy: 'Medicines once sold will not be taken back. Check expiry before leaving.'
       },
       theme: {
         mode: 'dark',
@@ -91,6 +101,12 @@ export class ConfigManager {
         const raw = fs.readFileSync(this.configPath, 'utf8');
         const parsed = JSON.parse(raw);
         if (this.validateConfig(parsed)) {
+          // Inject missing optional properties with blank fallbacks if undefined in loaded active config
+          if (!parsed.shop_info.address) parsed.shop_info.address = '';
+          if (!parsed.shop_info.phone) parsed.shop_info.phone = '';
+          if (!parsed.shop_info.gstin) parsed.shop_info.gstin = '';
+          if (!parsed.shop_info.dl_number) parsed.shop_info.dl_number = '';
+          if (!parsed.shop_info.return_policy) parsed.shop_info.return_policy = '';
           return parsed;
         }
         console.warn('ConfigManager: active config.json is corrupt. Backing up and reverting.');

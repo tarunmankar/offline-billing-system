@@ -1,414 +1,224 @@
 import React, { useState, useEffect } from 'react';
 import { useConfig } from '../context/ConfigContext';
-import { 
-  Package, Search, Plus, Edit, Trash2, Loader2, Barcode, 
-  DollarSign, Boxes, Calendar, Tag, AlertCircle, CheckCircle2, X 
-} from 'lucide-react';
+import { Package, Search, Plus, Edit, Trash2, Loader2, Barcode, DollarSign, Boxes, Calendar, Tag, AlertCircle, CheckCircle2, X } from 'lucide-react';
 
-interface Product {
-  id: number;
-  barcode: string | null;
-  name: string;
-  price: number;
-  stock: number;
-  metadata: Record<string, any>;
-}
+interface Product { id: number; barcode: string | null; name: string; price: number; stock: number; metadata: Record<string, any>; }
+
+const I: Record<string, React.CSSProperties> = {
+  card: { background: 'hsl(222,36%,11%)', border: '1px solid hsla(220,30%,30%,0.35)', borderRadius: 20 },
+  th: { padding: '16px 22px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'hsl(215,15%,35%)', whiteSpace: 'nowrap' as const },
+  td: { padding: '18px 22px', fontSize: 14, color: 'hsl(210,40%,98%)', verticalAlign: 'middle' as const },
+  label: { display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'hsl(215,20%,55%)', marginBottom: 8 },
+  input: { width: '100%', boxSizing: 'border-box' as const, padding: '12px 14px 12px 44px', fontSize: 14, borderRadius: 12, background: 'hsla(222,47%,4%,0.9)', border: '1px solid hsla(220,30%,25%,0.6)', color: 'hsl(210,40%,98%)', outline: 'none', fontFamily: 'inherit' },
+  btn: { display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', border: 'none', transition: 'all 0.2s' },
+  iconWrap: { position: 'absolute' as const, left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' as const, color: 'hsl(215,15%,40%)' },
+};
 
 const Inventory: React.FC = () => {
   const { config } = useConfig();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Modal & Edit State
-  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  
-  // Form State
-  const [formData, setFormData] = useState({
-    name: '',
-    barcode: '',
-    price: '',
-    stock: '',
-    metadata: {} as Record<string, any>
-  });
-  
-  // Alerts State
-  const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [formData, setFormData] = useState({ name: '', barcode: '', price: '', stock: '', metadata: {} as Record<string, any> });
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Load products from DB
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const electronAPI = (window as any).electronAPI;
-      if (electronAPI) {
-        const rawProducts = await electronAPI.getProducts();
-        const parsed = rawProducts.map((p: any) => ({
-          ...p,
-          metadata: typeof p.metadata === 'string' ? JSON.parse(p.metadata) : p.metadata || {}
-        }));
-        setProducts(parsed);
+      const api = (window as any).electronAPI;
+      if (api) {
+        const raw = await api.getProducts();
+        setProducts(raw.map((p: any) => ({ ...p, metadata: typeof p.metadata === 'string' ? JSON.parse(p.metadata) : p.metadata || {} })));
       } else {
-        // Fallback mockup for local web/browser testing
-        console.warn('Electron API not found, using mockup products.');
-        const mockData = [
+        setProducts([
           { id: 1, barcode: '8901234567890', name: 'Paracetamol 650mg', price: 42.50, stock: 120, metadata: { batch: 'PAR9022', expiry: '2027-08-31' } },
-          { id: 2, barcode: '8909876543210', name: 'Amoxicillin 500mg', price: 110.00, stock: 8, metadata: { batch: 'AMX4501', expiry: '2026-11-30' } },
-          { id: 3, barcode: '8901112223334', name: 'Cetirizine 10mg', price: 25.00, stock: 0, metadata: { batch: 'CET1209', expiry: '2026-06-15' } }
-        ];
-        setProducts(mockData);
+          { id: 2, barcode: '8909876543210', name: 'Amoxicillin 500mg', price: 110.00, stock: 3, metadata: { batch: 'AMX4501', expiry: '2026-11-30' } },
+          { id: 3, barcode: '8901112223334', name: 'Cetirizine 10mg', price: 25.00, stock: 0, metadata: { batch: 'CET1209', expiry: '2026-06-15' } },
+        ]);
       }
-    } catch (err) {
-      console.error('Failed to load products:', err);
-      showAlert('error', 'Failed to retrieve inventory records.');
-    } finally {
-      setLoading(false);
-    }
+    } catch { showAlrt('error', 'Failed to load inventory.'); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
+  useEffect(() => { loadProducts(); }, []);
 
-  const showAlert = (type: 'success' | 'error', message: string) => {
+  const showAlrt = (type: 'success' | 'error', message: string) => {
     setAlert({ type, message });
-    setTimeout(() => {
-      setAlert(null);
-    }, 4500);
+    setTimeout(() => setAlert(null), 4000);
   };
 
-  // Open Modal for Add
-  const handleOpenAdd = () => {
+  const openAdd = () => {
     setEditingProduct(null);
-    setFormData({
-      name: '',
-      barcode: '',
-      price: '',
-      stock: '',
-      metadata: (config?.custom_fields || []).reduce((acc, field) => {
-        acc[field.key] = '';
-        return acc;
-      }, {} as Record<string, any>)
-    });
+    setFormData({ name: '', barcode: '', price: '', stock: '', metadata: (config?.custom_fields || []).reduce((a, f) => ({ ...a, [f.key]: '' }), {}) });
     setShowModal(true);
   };
 
-  // Open Modal for Edit
-  const handleOpenEdit = (product: Product) => {
-    setEditingProduct(product);
-    setFormData({
-      name: product.name,
-      barcode: product.barcode || '',
-      price: product.price.toString(),
-      stock: product.stock.toString(),
-      metadata: {
-        ...(config?.custom_fields || []).reduce((acc, field) => {
-          acc[field.key] = '';
-          return acc;
-        }, {} as Record<string, any>),
-        ...product.metadata
-      }
-    });
+  const openEdit = (p: Product) => {
+    setEditingProduct(p);
+    setFormData({ name: p.name, barcode: p.barcode || '', price: p.price.toString(), stock: p.stock.toString(), metadata: { ...(config?.custom_fields || []).reduce((a, f) => ({ ...a, [f.key]: '' }), {}), ...p.metadata } });
     setShowModal(true);
   };
 
-  // Delete Product
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this product? This action is irreversible.')) return;
-    
+    if (!confirm('Delete this product?')) return;
     try {
-      const electronAPI = (window as any).electronAPI;
-      if (electronAPI) {
-        await electronAPI.deleteProduct(id);
-        loadProducts();
-      } else {
-        // Browser mockup delete
-        setProducts(prev => prev.filter(p => p.id !== id));
-      }
-      showAlert('success', 'Product deleted successfully.');
-    } catch (err) {
-      console.error('Failed to delete product:', err);
-      showAlert('error', 'Failed to delete product record.');
-    }
+      const api = (window as any).electronAPI;
+      if (api) { await api.deleteProduct(id); loadProducts(); }
+      else setProducts(prev => prev.filter(p => p.id !== id));
+      showAlrt('success', 'Product deleted.');
+    } catch { showAlrt('error', 'Delete failed.'); }
   };
 
-  // Save/Submit Form
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validations
-    if (!formData.name.trim()) return showAlert('error', 'Product name is required.');
-    const priceNum = parseFloat(formData.price);
-    if (isNaN(priceNum) || priceNum < 0) return showAlert('error', 'Please enter a valid price (>= 0).');
-    const stockNum = parseInt(formData.stock);
-    if (isNaN(stockNum) || stockNum < 0) return showAlert('error', 'Please enter a valid stock level (>= 0).');
-    
+    if (!formData.name.trim()) return showAlrt('error', 'Product name required.');
+    const price = parseFloat(formData.price), stock = parseInt(formData.stock);
+    if (isNaN(price) || price < 0) return showAlrt('error', 'Invalid price.');
+    if (isNaN(stock) || stock < 0) return showAlrt('error', 'Invalid stock.');
     setSaving(true);
     try {
-      const electronAPI = (window as any).electronAPI;
-      const productPayload = {
-        name: formData.name.trim(),
-        barcode: formData.barcode.trim() || null,
-        price: priceNum,
-        stock: stockNum,
-        metadata: formData.metadata
-      };
-
+      const api = (window as any).electronAPI;
+      const payload = { name: formData.name.trim(), barcode: formData.barcode.trim() || null, price, stock, metadata: formData.metadata };
       if (editingProduct) {
-        // Edit Mode
-        if (electronAPI) {
-          await electronAPI.updateProduct(editingProduct.id, productPayload);
-          loadProducts();
-        } else {
-          // Browser mockup update
-          setProducts(prev => prev.map(p => p.id === editingProduct.id ? { ...p, ...productPayload, price: priceNum, stock: stockNum } : p));
-        }
-        showAlert('success', 'Product updated successfully.');
+        if (api) { await api.updateProduct(editingProduct.id, payload); loadProducts(); }
+        else setProducts(prev => prev.map(p => p.id === editingProduct.id ? { ...p, ...payload } : p));
+        showAlrt('success', 'Product updated.');
       } else {
-        // Add Mode
-        if (electronAPI) {
-          await electronAPI.addProduct(productPayload);
-          loadProducts();
-        } else {
-          // Browser mockup insert
-          const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-          setProducts(prev => [...prev, { id: newId, ...productPayload, price: priceNum, stock: stockNum, metadata: productPayload.metadata }]);
-        }
-        showAlert('success', 'Product catalog record saved successfully.');
+        if (api) { await api.addProduct(payload); loadProducts(); }
+        else setProducts(prev => [...prev, { id: Date.now(), ...payload }]);
+        showAlrt('success', 'Product added.');
       }
-      
       setShowModal(false);
     } catch (err: any) {
-      console.error('Failed to save product:', err);
-      if (err.message && err.message.includes('UNIQUE constraint failed')) {
-        showAlert('error', 'Barcode validation error: A product with this barcode already exists.');
-      } else {
-        showAlert('error', 'Database write failure. Verify all inputs.');
-      }
-    } finally {
-      setSaving(false);
-    }
+      showAlrt('error', err.message?.includes('UNIQUE') ? 'Barcode already exists.' : 'Save failed.');
+    } finally { setSaving(false); }
   };
 
-  // Helper to dynamically resolve input type for custom fields
-  const resolveFieldType = (key: string, label: string): 'text' | 'number' | 'date' => {
-    const lowerKey = key.toLowerCase();
-    const lowerLabel = label.toLowerCase();
-    
-    if (lowerKey.includes('date') || lowerKey.includes('expiry') || lowerLabel.includes('date')) return 'date';
-    if (lowerKey.includes('price') || lowerKey.includes('qty') || lowerKey.includes('quantity') || lowerKey.includes('amount')) return 'number';
-    
+  const resolveType = (key: string, label: string): 'text' | 'number' | 'date' => {
+    const k = key.toLowerCase(), l = label.toLowerCase();
+    if (k.includes('date') || k.includes('expiry') || l.includes('date')) return 'date';
+    if (k.includes('price') || k.includes('qty') || k.includes('quantity')) return 'number';
     return 'text';
   };
 
-  // Helper to get custom field dynamic icons
-  const getFieldIcon = (type: string, key: string) => {
-    if (type === 'date') return <Calendar size={18} className="text-blue-400" />;
-    if (type === 'number') return <Boxes size={18} className="text-emerald-400" />;
-    if (key.toLowerCase().includes('batch') || key.toLowerCase().includes('code')) return <Tag size={18} className="text-purple-400" />;
-    return <Package size={18} className="text-slate-400" />;
-  };
-
-  // Filtered Products list
-  const filteredProducts = products.filter(p => {
-    const query = searchQuery.toLowerCase().trim();
-    if (!query) return true;
-    return (
-      p.name.toLowerCase().includes(query) ||
-      (p.barcode && p.barcode.toLowerCase().includes(query)) ||
-      (p.metadata && Object.values(p.metadata).some(val => 
-        val && val.toString().toLowerCase().includes(query)
-      ))
-    );
+  const filtered = products.filter(p => {
+    const q = searchQuery.toLowerCase().trim();
+    return !q || p.name.toLowerCase().includes(q) || (p.barcode || '').toLowerCase().includes(q);
   });
 
+  const stockBadge = (stock: number) => {
+    if (stock === 0) return { bg: 'hsla(4,86%,58%,0.12)', border: 'hsla(4,86%,58%,0.3)', color: 'hsl(4,86%,65%)', label: 'Out of Stock' };
+    if (stock < 10) return { bg: 'hsla(38,92%,50%,0.1)', border: 'hsla(38,92%,50%,0.3)', color: 'hsl(38,92%,55%)', label: 'Low Stock' };
+    return { bg: 'hsla(158,64%,52%,0.1)', border: 'hsla(158,64%,52%,0.3)', color: 'hsl(158,64%,52%)', label: 'In Stock' };
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Alert Banner */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 48 }}>
+
+      {/* Toast Alert */}
       {alert && (
-        <div 
-          className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl border transition-all duration-300 animate-slide-in ${
-            alert.type === 'success' 
-              ? 'bg-emerald-950/90 border-emerald-800 text-emerald-200' 
-              : 'bg-red-950/90 border-red-800 text-red-200'
-          }`}
-        >
-          {alert.type === 'success' ? <CheckCircle2 className="text-emerald-400 shrink-0" size={22} /> : <AlertCircle className="text-red-400 shrink-0" size={22} />}
-          <span className="text-sm font-semibold tracking-wide">{alert.message}</span>
-          <button onClick={() => setAlert(null)} className="ml-2 text-slate-400 hover:text-white transition-colors cursor-pointer">
-            <X size={16} />
-          </button>
+        <div style={{ position: 'fixed', top: 24, right: 24, zIndex: 200, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderRadius: 14, boxShadow: '0 8px 32px -4px hsla(222,47%,2%,0.6)', background: alert.type === 'success' ? 'hsla(158,50%,8%,0.97)' : 'hsla(4,50%,10%,0.97)', border: `1px solid ${alert.type === 'success' ? 'hsla(158,64%,52%,0.4)' : 'hsla(4,86%,58%,0.4)'}` }}>
+          {alert.type === 'success' ? <CheckCircle2 size={20} color="hsl(158,64%,52%)" /> : <AlertCircle size={20} color="hsl(4,86%,65%)" />}
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'hsl(210,40%,98%)' }}>{alert.message}</span>
+          <button onClick={() => setAlert(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(215,15%,40%)', marginLeft: 4, display: 'flex' }}><X size={15} /></button>
         </div>
       )}
 
-      {/* Header section with Action Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between border-b theme-header-border pb-6 transition-theme">
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, paddingBottom: 24, borderBottom: '1px solid hsla(220,30%,30%,0.35)' }}>
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-3 transition-theme">
-            <Package className="text-[var(--primary)]" size={26} />
-            <span>Product Catalog</span>
-          </h2>
-          <p className="theme-text-secondary mt-1 transition-theme">Manage catalog items, monitor offline inventory stock, and track dynamic custom metadata.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'hsla(221,83%,53%,0.08)', border: '1px solid hsla(221,83%,53%,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Package size={20} color="hsl(221,83%,53%)" />
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: 'hsl(210,40%,98%)' }}>Product Catalog</h2>
+          </div>
+          <p style={{ fontSize: 13, color: 'hsl(215,20%,55%)' }}>Manage catalog items, monitor stock levels, and track custom metadata.</p>
         </div>
-
-        <button 
-          onClick={handleOpenAdd}
-          className="flex items-center gap-2 px-5 py-3 bg-[var(--primary)] text-white font-semibold rounded-xl hover:brightness-110 hover:shadow-lg hover:shadow-[var(--primary)]/20 active:scale-98 transition-all duration-200 cursor-pointer shadow-md text-sm"
-        >
-          <Plus size={18} />
-          <span>Add New Product</span>
+        <button onClick={openAdd} style={{ ...I.btn, background: 'hsl(221,83%,53%)', color: '#fff', boxShadow: '0 4px 14px -2px hsla(221,83%,53%,0.4)' }}
+          onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.12)')}
+          onMouseLeave={e => (e.currentTarget.style.filter = 'none')}>
+          <Plus size={18} /> Add Product
         </button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="theme-card-solid border p-4 rounded-xl shadow-sm flex flex-col md:flex-row gap-4 items-center transition-theme">
-        <div className="relative flex-1 w-full">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-            <Search size={18} />
-          </div>
-          <input 
-            type="text"
-            placeholder="Search by product name, barcode scan, batch no, or custom values..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-color)] text-sm rounded-lg focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] block pl-11 pr-4 py-3 transition-theme"
-          />
-          {searchQuery && (
-            <button 
-              onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <X size={16} />
-            </button>
-          )}
+      {/* Search */}
+      <div style={{ ...I.card, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ flex: 1, position: 'relative' }}>
+          <Search size={16} style={{ ...I.iconWrap }} />
+          <input type="text" placeholder="Search by name, barcode, batch..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+            style={{ ...I.input, paddingLeft: 44, paddingRight: searchQuery ? 40 : 14 }} />
+          {searchQuery && <button onClick={() => setSearchQuery('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(215,15%,40%)', display: 'flex' }}><X size={15} /></button>}
         </div>
-
-        <div className="text-xs font-semibold theme-text-secondary whitespace-nowrap tracking-wider uppercase bg-black/5 dark:bg-white/5 py-2 px-3 rounded-lg border theme-border">
-          Total: {filteredProducts.length} Item{filteredProducts.length !== 1 ? 's' : ''} Listed
-        </div>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'hsl(215,20%,55%)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{filtered.length} Items</span>
       </div>
 
-      {/* Product List/Grid View */}
+      {/* Table */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="animate-spin text-[var(--primary)]" size={36} />
-          <span className="text-sm font-semibold tracking-wider theme-text-secondary uppercase">Hydrating Catalog...</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px', gap: 16 }}>
+          <Loader2 size={32} color="hsl(221,83%,53%)" style={{ animation: 'spin 1s linear infinite' }} />
+          <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'hsl(215,20%,55%)' }}>Loading Catalog...</span>
         </div>
-      ) : filteredProducts.length === 0 ? (
-        <div className="theme-card-solid border rounded-2xl p-16 text-center shadow-lg transition-theme">
-          <div className="inline-flex p-4 rounded-full bg-slate-500/10 text-slate-400 mb-4 border border-slate-500/20">
-            <Package size={36} />
+      ) : filtered.length === 0 ? (
+        <div style={{ ...I.card, padding: '64px 24px', textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, borderRadius: 16, background: 'hsla(220,30%,30%,0.2)', border: '1px solid hsla(220,30%,30%,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <Package size={28} color="hsl(215,15%,35%)" />
           </div>
-          <h3 className="text-lg font-bold text-[var(--text-color)] transition-theme">No products matched search query</h3>
-          <p className="theme-text-secondary text-sm mt-2 max-w-md mx-auto transition-theme">
-            {searchQuery ? 'Adjust your keyword search or scanning barcode identifier.' : 'Your offline product catalog database is empty. Get started by adding your first product.'}
-          </p>
-          {searchQuery && (
-            <button 
-              onClick={() => setSearchQuery('')}
-              className="mt-5 text-sm font-semibold text-[var(--primary)] hover:underline cursor-pointer"
-            >
-              Clear Search Query
-            </button>
-          )}
+          <p style={{ fontSize: 16, fontWeight: 600, color: 'hsl(215,20%,55%)', marginBottom: 8 }}>No products found</p>
+          <p style={{ fontSize: 13, color: 'hsl(215,15%,40%)' }}>{searchQuery ? 'Try a different search.' : 'Add your first product to get started.'}</p>
+          {searchQuery && <button onClick={() => setSearchQuery('')} style={{ marginTop: 16, background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(221,83%,60%)', fontSize: 13, fontWeight: 600 }}>Clear Search</button>}
         </div>
       ) : (
-        <div className="theme-card-solid border rounded-xl overflow-hidden shadow-xl transition-theme">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+        <div style={{ ...I.card, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
-                <tr className="border-b theme-border bg-black/10 dark:bg-white/3 font-semibold text-xs theme-text-secondary uppercase tracking-wider">
-                  <th className="py-4 px-6">Barcode / Name</th>
-                  <th className="py-4 px-6 text-right">Unit Price</th>
-                  <th className="py-4 px-6 text-center">Stock Level</th>
-                  {config?.custom_fields?.map((field) => (
-                    <th key={field.key} className="py-4 px-6">{field.label}</th>
-                  ))}
-                  <th className="py-4 px-6 text-center">Actions</th>
+                <tr style={{ borderBottom: '1px solid hsla(220,30%,30%,0.35)', background: 'hsla(222,47%,5%,0.6)' }}>
+                  <th style={I.th}>Product / Barcode</th>
+                  <th style={{ ...I.th, textAlign: 'right' }}>Price</th>
+                  <th style={{ ...I.th, textAlign: 'center' }}>Stock</th>
+                  {config?.custom_fields?.map(f => <th key={f.key} style={I.th}>{f.label}</th>)}
+                  <th style={{ ...I.th, textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y theme-border text-sm">
-                {filteredProducts.map((product) => {
-                  // Stock badges
-                  let stockBadgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-                  let stockText = 'In Stock';
-                  if (product.stock === 0) {
-                    stockBadgeClass = 'bg-red-500/10 text-red-400 border-red-500/20 animate-pulse';
-                    stockText = 'Out of Stock';
-                  } else if (product.stock < 10) {
-                    stockBadgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-                    stockText = 'Low Stock';
-                  }
-
+              <tbody>
+                {filtered.map(product => {
+                  const badge = stockBadge(product.stock);
                   return (
-                    <tr 
-                      key={product.id} 
-                      className="hover:bg-slate-500/5 dark:hover:bg-white/2 transition-colors duration-150"
-                    >
-                      {/* Barcode & Name */}
-                      <td className="py-4 px-6">
-                        <div className="flex flex-col gap-1.5 max-w-[280px] sm:max-w-xs md:max-w-md">
-                          <span className="font-bold text-[var(--text-color)] tracking-tight text-base truncate transition-theme">
-                            {product.name}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 font-mono text-xs theme-text-secondary truncate transition-theme">
-                            <Barcode size={13} className="opacity-70" />
-                            {product.barcode ? product.barcode : <span className="opacity-40 italic">No Barcode</span>}
-                          </span>
+                    <tr key={product.id} style={{ borderBottom: '1px solid hsla(220,30%,30%,0.2)' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'hsla(220,30%,30%,0.12)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                      <td style={I.td}>
+                        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 5 }}>{product.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'hsl(215,20%,55%)', fontSize: 12, fontFamily: 'monospace' }}>
+                          <Barcode size={12} />{product.barcode || <em style={{ opacity: 0.5 }}>No barcode</em>}
                         </div>
                       </td>
-
-                      {/* Price */}
-                      <td className="py-4 px-6 text-right">
-                        <span className="font-mono font-bold text-[var(--text-color)] text-base transition-theme">
-                          ₹{product.price.toFixed(2)}
-                        </span>
+                      <td style={{ ...I.td, textAlign: 'right', fontFamily: 'monospace', fontWeight: 700 }}>₹{product.price.toFixed(2)}</td>
+                      <td style={{ ...I.td, textAlign: 'center' }}>
+                        <div style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 18, marginBottom: 6 }}>{product.stock}</div>
+                        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', padding: '3px 10px', borderRadius: 999, background: badge.bg, border: `1px solid ${badge.border}`, color: badge.color }}>{badge.label}</span>
                       </td>
-
-                      {/* Stock */}
-                      <td className="py-4 px-6 text-center">
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="font-mono font-bold text-[var(--text-color)] text-base transition-theme">
-                            {product.stock}
-                          </span>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-bold tracking-wide uppercase ${stockBadgeClass}`}>
-                            {stockText}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Custom Fields */}
-                      {config?.custom_fields?.map((field) => {
-                        const val = product.metadata?.[field.key];
-                        return (
-                          <td key={field.key} className="py-4 px-6 whitespace-nowrap font-medium">
-                            {val ? (
-                              <span className="font-mono theme-text-secondary bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded border theme-border text-xs">
-                                {val}
-                              </span>
-                            ) : (
-                              <span className="text-slate-500 opacity-40">-</span>
-                            )}
-                          </td>
-                        );
-                      })}
-
-                      {/* Actions */}
-                      <td className="py-4 px-6 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button 
-                            onClick={() => handleOpenEdit(product)}
-                            title="Edit Product"
-                            className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all duration-150 cursor-pointer border border-transparent hover:border-blue-500/20"
-                          >
+                      {config?.custom_fields?.map(f => (
+                        <td key={f.key} style={I.td}>
+                          {product.metadata?.[f.key] ? (
+                            <span style={{ fontFamily: 'monospace', fontSize: 12, padding: '4px 10px', borderRadius: 8, background: 'hsla(220,30%,30%,0.3)', border: '1px solid hsla(220,30%,30%,0.4)', color: 'hsl(215,20%,65%)' }}>{product.metadata[f.key]}</span>
+                          ) : <span style={{ color: 'hsl(215,15%,30%)' }}>—</span>}
+                        </td>
+                      ))}
+                      <td style={{ ...I.td, textAlign: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                          <button onClick={() => openEdit(product)} title="Edit" style={{ padding: '8px', borderRadius: 8, background: 'none', border: '1px solid transparent', cursor: 'pointer', color: 'hsl(215,15%,40%)', display: 'flex', transition: 'all 0.15s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'hsla(221,83%,53%,0.1)'; e.currentTarget.style.color = 'hsl(221,83%,65%)'; e.currentTarget.style.borderColor = 'hsla(221,83%,53%,0.3)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'hsl(215,15%,40%)'; e.currentTarget.style.borderColor = 'transparent'; }}>
                             <Edit size={16} />
                           </button>
-                          <button 
-                            onClick={() => handleDelete(product.id)}
-                            title="Delete Product"
-                            className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-150 cursor-pointer border border-transparent hover:border-red-500/20"
-                          >
+                          <button onClick={() => handleDelete(product.id)} title="Delete" style={{ padding: '8px', borderRadius: 8, background: 'none', border: '1px solid transparent', cursor: 'pointer', color: 'hsl(215,15%,40%)', display: 'flex', transition: 'all 0.15s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'hsla(4,86%,58%,0.1)'; e.currentTarget.style.color = 'hsl(4,86%,65%)'; e.currentTarget.style.borderColor = 'hsla(4,86%,58%,0.3)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'hsl(215,15%,40%)'; e.currentTarget.style.borderColor = 'transparent'; }}>
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -422,183 +232,77 @@ const Inventory: React.FC = () => {
         </div>
       )}
 
-      {/* Add / Edit Product Glassmorphic Modal */}
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
-          <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-scale-up">
-            
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'hsla(222,47%,2%,0.75)', backdropFilter: 'blur(8px)' }}>
+          <div style={{ width: '100%', maxWidth: 620, maxHeight: '90vh', display: 'flex', flexDirection: 'column', background: 'hsl(222,36%,10%)', border: '1px solid hsla(220,30%,30%,0.4)', borderRadius: 24, boxShadow: '0 32px 80px -12px hsla(222,47%,2%,0.8)', overflow: 'hidden' }}>
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between bg-black/20">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2.5">
-                <Package className="text-[var(--primary)]" size={22} />
-                <span>{editingProduct ? 'Edit Product Details' : 'Add New Product Record'}</span>
-              </h3>
-              <button 
-                onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-white bg-slate-800/40 p-2 rounded-lg transition-colors cursor-pointer"
-              >
-                <X size={18} />
-              </button>
+            <div style={{ padding: '22px 28px', borderBottom: '1px solid hsla(220,30%,30%,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsla(222,47%,5%,0.5)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Package size={20} color="hsl(221,83%,53%)" />
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'hsl(210,40%,98%)' }}>{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
+              </div>
+              <button onClick={() => setShowModal(false)} style={{ background: 'hsla(220,30%,30%,0.4)', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer', color: 'hsl(215,20%,55%)', display: 'flex' }}><X size={18} /></button>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-6">
-              
-              {/* Basic Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Product Name */}
-                <div className="flex flex-col gap-2 md:col-span-2">
-                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Product Name *
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[var(--primary)] transition-colors">
-                      <Package size={18} />
-                    </div>
-                    <input 
-                      type="text"
-                      required
-                      placeholder="e.g. Paracetamol 650mg"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full bg-slate-950 border border-slate-800 text-white text-sm rounded-lg focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] block pl-11 p-3 transition-all"
-                    />
+            <form onSubmit={handleSave} style={{ flex: 1, overflowY: 'auto', padding: '28px 28px 20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                {/* Name — full width */}
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={I.label}>Product Name *</label>
+                  <div style={{ position: 'relative' }}>
+                    <Package size={16} style={I.iconWrap} />
+                    <input type="text" required placeholder="e.g. Paracetamol 650mg" value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} style={I.input} />
                   </div>
                 </div>
-
                 {/* Barcode */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Barcode Identifier (Optional)
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[var(--primary)] transition-colors">
-                      <Barcode size={18} />
-                    </div>
-                    <input 
-                      type="text"
-                      placeholder="Scan or enter barcode barcode"
-                      value={formData.barcode}
-                      onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
-                      className="w-full bg-slate-950 border border-slate-800 text-white text-sm rounded-lg focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] block pl-11 p-3 transition-all font-mono"
-                    />
+                <div>
+                  <label style={I.label}>Barcode (Optional)</label>
+                  <div style={{ position: 'relative' }}>
+                    <Barcode size={16} style={I.iconWrap} />
+                    <input type="text" placeholder="Scan or type..." value={formData.barcode} onChange={e => setFormData(p => ({ ...p, barcode: e.target.value }))} style={{ ...I.input, fontFamily: 'monospace' }} />
                   </div>
                 </div>
-
-                {/* Unit Price */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Unit Sale Price (₹) *
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[var(--primary)] transition-colors">
-                      <DollarSign size={18} />
-                    </div>
-                    <input 
-                      type="number"
-                      required
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formData.price}
-                      onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                      className="w-full bg-slate-950 border border-slate-800 text-white text-sm rounded-lg focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] block pl-11 p-3 transition-all font-mono"
-                    />
+                {/* Price */}
+                <div>
+                  <label style={I.label}>Unit Price (₹) *</label>
+                  <div style={{ position: 'relative' }}>
+                    <DollarSign size={16} style={I.iconWrap} />
+                    <input type="number" required step="0.01" min="0" placeholder="0.00" value={formData.price} onChange={e => setFormData(p => ({ ...p, price: e.target.value }))} style={{ ...I.input, fontFamily: 'monospace' }} />
                   </div>
                 </div>
-
-                {/* Initial Stock */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Stock Quantity *
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[var(--primary)] transition-colors">
-                      <Boxes size={18} />
-                    </div>
-                    <input 
-                      type="number"
-                      required
-                      min="0"
-                      placeholder="0"
-                      value={formData.stock}
-                      onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
-                      className="w-full bg-slate-950 border border-slate-800 text-white text-sm rounded-lg focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] block pl-11 p-3 transition-all font-mono"
-                    />
+                {/* Stock */}
+                <div>
+                  <label style={I.label}>Stock Quantity *</label>
+                  <div style={{ position: 'relative' }}>
+                    <Boxes size={16} style={I.iconWrap} />
+                    <input type="number" required min="0" placeholder="0" value={formData.stock} onChange={e => setFormData(p => ({ ...p, stock: e.target.value }))} style={{ ...I.input, fontFamily: 'monospace' }} />
                   </div>
                 </div>
+                {/* Custom Fields */}
+                {config?.custom_fields?.map(field => {
+                  const type = resolveType(field.key, field.label);
+                  const Icon = type === 'date' ? Calendar : type === 'number' ? Boxes : Tag;
+                  return (
+                    <div key={field.key}>
+                      <label style={I.label}>{field.label}</label>
+                      <div style={{ position: 'relative' }}>
+                        <Icon size={16} style={I.iconWrap} />
+                        <input type={type} placeholder={`Enter ${field.label}...`} value={formData.metadata[field.key] || ''} onChange={e => setFormData(p => ({ ...p, metadata: { ...p.metadata, [field.key]: e.target.value } }))} style={I.input} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* Dynamic Custom Metadata Fields from Config Schema */}
-              {config?.custom_fields && config.custom_fields.length > 0 && (
-                <div className="border-t border-slate-800/80 pt-6">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span>✨ Dynamic Custom Fields</span>
-                    <span className="text-[10px] font-semibold bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">Config Driven</span>
-                  </h4>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {config.custom_fields.map((field) => {
-                      const type = resolveFieldType(field.key, field.label);
-                      return (
-                        <div key={field.key} className="flex flex-col gap-2">
-                          <label htmlFor={`modal-field-${field.key}`} className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            {field.label}
-                          </label>
-                          <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none group-focus-within:text-[var(--primary)] transition-colors">
-                              {getFieldIcon(type, field.key)}
-                            </div>
-                            <input 
-                              id={`modal-field-${field.key}`}
-                              type={type}
-                              placeholder={`Enter ${field.label}...`}
-                              value={formData.metadata[field.key] || ''}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setFormData(prev => ({
-                                  ...prev,
-                                  metadata: {
-                                    ...prev.metadata,
-                                    [field.key]: val
-                                  }
-                                }));
-                              }}
-                              className="w-full bg-slate-950 border border-slate-800 text-white text-sm rounded-lg focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] block pl-11 p-3 transition-all"
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Modal Footer Controls */}
-              <div className="border-t border-slate-800/80 pt-6 flex items-center justify-end gap-3 bg-slate-900 sticky bottom-0">
-                <button 
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-800 font-semibold rounded-xl transition-all text-sm cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  disabled={saving}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-[var(--primary)] text-white font-bold rounded-xl hover:brightness-110 hover:shadow-lg hover:shadow-[var(--primary)]/20 active:scale-98 transition-all disabled:opacity-50 text-sm cursor-pointer"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="animate-spin" size={16} />
-                      <span>Writing Record...</span>
-                    </>
-                  ) : (
-                    <span>Save Product</span>
-                  )}
+              {/* Footer */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 28, paddingTop: 20, borderTop: '1px solid hsla(220,30%,30%,0.35)' }}>
+                <button type="button" onClick={() => setShowModal(false)} style={{ ...I.btn, background: 'hsla(220,30%,30%,0.4)', color: 'hsl(215,20%,65%)', border: '1px solid hsla(220,30%,30%,0.4)' }}>Cancel</button>
+                <button type="submit" disabled={saving} style={{ ...I.btn, background: 'hsl(221,83%,53%)', color: '#fff', opacity: saving ? 0.7 : 1 }}>
+                  {saving ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Saving...</> : 'Save Product'}
                 </button>
               </div>
-
             </form>
           </div>
         </div>

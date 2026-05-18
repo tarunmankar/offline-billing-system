@@ -41,8 +41,8 @@ To start the Vite UI server and boot the sandboxed Electron application in paral
 npm run dev
 ```
 
-### **3. Validate IPC Channels**
-To verify communication integrity and transactional database capabilities:
+### **3. Validate Local IPC/DB Bridge**
+To run a quick local validation for the Electron-native database bridge:
 ```bash
 npm run test:ipc
 ```

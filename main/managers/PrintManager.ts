@@ -74,7 +74,7 @@ export class PrintManager {
           </html>
         `;
 
-        printWindow.loadURL(\`data:text/html;charset=utf-8,\${encodeURIComponent(html)}\`);
+        printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
 
         printWindow.webContents.on('did-finish-load', () => {
           printWindow!.webContents.print({

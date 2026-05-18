@@ -117,12 +117,25 @@ export const initDB = () => {
     )
   `).run();
 
+  // 7.5. Expenses Table (Daily shop outflows)
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS expenses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      amount REAL NOT NULL CHECK(amount > 0.0),
+      description TEXT NOT NULL,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `).run();
+
   // 8. Performance Indexes
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode) WHERE barcode IS NOT NULL`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_products_name ON products(name)`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id ON sale_items(sale_id)`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_sales_timestamp ON sales(timestamp)`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_credit_ledger_customer ON credit_ledger(customer_id)`).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_expenses_timestamp ON expenses(timestamp)`).run();
 
   console.log('DB: Tables and performance indexes successfully verified.');
 

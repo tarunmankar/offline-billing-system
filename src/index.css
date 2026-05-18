@@ -1,103 +1,167 @@
+/* ============================================================
+   BILLING PRO 2026 — COMPLETE DESIGN SYSTEM
+   Tailwind v4 + CSS Custom Properties
+   ============================================================ */
+
 @import "tailwindcss";
 
-:root {
-  --primary: #2563eb;
-  
-  /* Dark Mode Variables (Default) */
-  --bg-color: #020617; /* slate-950 */
-  --text-color: #f1f5f9; /* slate-100 */
-  --text-secondary: #94a3b8; /* slate-400 */
-  --card-bg: rgba(15, 23, 42, 0.6); /* slate-900/60 */
-  --card-bg-solid: #0f172a; /* slate-900 */
-  --card-border: rgba(30, 41, 59, 0.8); /* slate-800 */
-  --input-bg: rgba(2, 6, 23, 0.8); /* slate-950/80 */
-  --input-border: rgba(30, 41, 59, 0.8); /* slate-800 */
-  --sidebar-bg: #0f172a; /* slate-900 */
-  --nav-hover: #1e293b; /* slate-800 */
-  --nav-active: rgba(37, 99, 235, 0.1);
-  --header-border: rgba(30, 41, 59, 0.6);
-  --glow-opacity: 0.1;
-  --pulse-opacity: 0.15;
+/* ── Tailwind v4: Register Custom Theme Tokens ─────────────────
+   This makes bg-primary, text-primary, border-surface etc. work
+   as proper Tailwind utility classes.
+───────────────────────────────────────────────────────────────── */
+@theme {
+  --color-primary:        hsl(221, 83%, 53%);
+  --color-primary-hover:  hsl(221, 83%, 60%);
+  --color-surface:        hsl(222, 40%, 8%);
+  --color-elevated:       hsl(222, 36%, 11%);
+  --color-overlay:        hsl(222, 30%, 14%);
+  --color-sidebar:        hsl(222, 40%, 7%);
+  --color-success:        hsl(158, 64%, 52%);
+  --color-warning:        hsl(38, 92%, 50%);
+  --color-danger:         hsl(4, 86%, 58%);
+  --color-purple:         hsl(262, 80%, 65%);
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  --radius-card: 1.25rem;
+  --radius-input: 0.75rem;
+  --radius-badge: 9999px;
 }
 
+/* ── CSS Custom Properties (Runtime Variables) ─────────────── */
+:root {
+  /* Brand */
+  --primary:         hsl(221, 83%, 53%);
+  --primary-hover:   hsl(221, 83%, 60%);
+  --primary-glow:    hsla(221, 83%, 53%, 0.25);
+  --primary-subtle:  hsla(221, 83%, 53%, 0.08);
+
+  /* Accents */
+  --accent-emerald:  hsl(158, 64%, 52%);
+  --accent-amber:    hsl(38, 92%, 50%);
+  --accent-red:      hsl(4, 86%, 58%);
+  --accent-purple:   hsl(262, 80%, 65%);
+
+  /* Backgrounds */
+  --bg-base:         hsl(222, 47%, 5%);
+  --bg-surface:      hsl(222, 40%, 8%);
+  --bg-elevated:     hsl(222, 36%, 11%);
+  --bg-overlay:      hsl(222, 30%, 14%);
+  --sidebar-bg:      hsl(222, 40%, 7%);
+
+  /* Borders */
+  --border-subtle:   hsla(220, 30%, 30%, 0.35);
+  --border-strong:   hsla(220, 30%, 40%, 0.5);
+  --border-glow:     hsla(221, 83%, 53%, 0.4);
+
+  /* Text */
+  --text-primary:    hsl(210, 40%, 98%);
+  --text-secondary:  hsl(215, 25%, 72%); /* Brightened from 55% for premium, crisp legibility */
+  --text-muted:      hsl(215, 20%, 54%);     /* Brightened from 35% for clean secondary visibility */
+
+  /* Input */
+  --input-bg:        hsla(222, 47%, 4%, 0.9);
+  --input-border:    hsla(220, 30%, 25%, 0.6);
+
+  /* Shadows */
+  --shadow-card:     0 4px 24px -4px hsla(222, 47%, 2%, 0.8), 0 1px 4px hsla(222, 47%, 2%, 0.4);
+  --shadow-glow:     0 0 30px -5px var(--primary-glow);
+  --shadow-button:   0 4px 14px -2px var(--primary-glow);
+}
+
+/* Light mode overrides */
 :root.light {
-  /* Light Mode Variables */
-  --bg-color: #f8fafc; /* slate-50 */
-  --text-color: #0f172a; /* slate-900 */
-  --text-secondary: #475569; /* slate-600 */
-  --card-bg: rgba(255, 255, 255, 0.7); /* pure glass white */
-  --card-bg-solid: #ffffff; /* pure white */
-  --card-border: rgba(226, 232, 240, 0.8); /* slate-200 */
-  --input-bg: rgba(255, 255, 255, 0.9); /* white/90 */
-  --input-border: #cbd5e1; /* slate-300 */
-  --sidebar-bg: #f1f5f9; /* slate-100 */
-  --nav-hover: #cbd5e1; /* slate-300 */
-  --nav-active: rgba(37, 99, 235, 0.08);
-  --header-border: rgba(226, 232, 240, 0.6);
-  --glow-opacity: 0.03;
-  --pulse-opacity: 0.05;
+  --primary:         hsl(221, 83%, 48%);
+  --primary-glow:    hsla(221, 83%, 48%, 0.2);
+  --primary-subtle:  hsla(221, 83%, 48%, 0.06);
+  --bg-base:         hsl(210, 20%, 96%);
+  --bg-surface:      hsl(0, 0%, 100%);
+  --bg-elevated:     hsl(210, 20%, 98%);
+  --bg-overlay:      hsl(210, 15%, 93%);
+  --sidebar-bg:      hsl(0, 0%, 100%);
+  --border-subtle:   hsla(215, 20%, 70%, 0.4);
+  --border-strong:   hsla(215, 20%, 60%, 0.6);
+  --border-glow:     hsla(221, 83%, 48%, 0.3);
+  --text-primary:    hsl(222, 47%, 10%);
+  --text-secondary:  hsl(215, 25%, 30%); /* Darkened from 45% for high-contrast premium feel */
+  --text-muted:      hsl(215, 20%, 46%);     /* Darkened from 60% for crisp, legible subtexts */
+  --input-bg:        hsl(0, 0%, 100%);
+  --input-border:    hsl(215, 20%, 80%);
+  --shadow-card:     0 1px 3px hsla(222, 47%, 10%, 0.06), 0 4px 20px -4px hsla(222, 47%, 10%, 0.08);
+}
+
+/* ── Base Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   min-height: 100vh;
-  margin: 0;
   overflow: hidden;
   user-select: none;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Premium Dynamic Styling Classes */
-.theme-bg {
-  background-color: var(--bg-color);
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* ── Animations ─────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, -25px) scale(1.06); }
+  66% { transform: translate(-15px, 12px) scale(0.96); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
-.theme-card {
-  background-color: var(--card-bg);
-  border-color: var(--card-border);
-  color: var(--text-color);
+/* ── Utility Classes (used in TSX files) ────────────────────── */
+.animate-fade-in  { animation: fadeIn 0.3s ease both; }
+.animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-spin     { animation: spin 1s linear infinite; }
+.animate-pulse    { animation: pulse 2s ease infinite; }
+.animate-blob     { animation: blobFloat 9s ease-in-out infinite; }
+.animate-blob-2   { animation: blobFloat 9s ease-in-out 3s infinite; }
+
+/* ── Skeleton Loader ─────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-overlay) 50%, var(--bg-elevated) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease infinite;
+  border-radius: 8px;
 }
 
-.theme-card-solid {
-  background-color: var(--card-bg-solid);
-  border-color: var(--card-border);
-  color: var(--text-color);
-}
+/* ── Font ────────────────────────────────────────────────────── */
+.font-mono { font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace; }
 
-.theme-input {
-  background-color: var(--input-bg);
-  border-color: var(--input-border);
-  color: var(--text-color);
-}
-
-.theme-input::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.7;
-}
-
-.theme-sidebar {
-  background-color: var(--sidebar-bg);
-  border-color: var(--card-border);
-}
-
-.theme-text-secondary {
-  color: var(--text-secondary);
-}
-
-.theme-border {
-  border-color: var(--card-border);
-}
-
-.theme-header-border {
-  border-color: var(--header-border);
-}
-
-/* Dynamic Smooth transition timing globally */
-.transition-theme {
-  transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+/* ── Focus Ring ──────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 6px;
 }

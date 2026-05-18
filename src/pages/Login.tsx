@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, User, Eye, EyeOff, Activity, ShoppingCart, Sparkles, ShieldAlert } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, Activity, ShoppingCart, ShieldAlert, Zap, WifiOff } from 'lucide-react';
 
 const Login: React.FC = () => {
   const { login } = useAuth();
@@ -13,191 +13,281 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [userFocused, setUserFocused] = useState(false);
+  const [passFocused, setPassFocused] = useState(false);
   const usernameRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus username field on mount
-  useEffect(() => {
-    usernameRef.current?.focus();
-  }, []);
+  useEffect(() => { usernameRef.current?.focus(); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
-      setError('Please fill in all credential fields.');
-      return;
-    }
-
+    if (!username.trim() || !password.trim()) { setError('Please fill in both fields.'); return; }
     setIsSubmitting(true);
     setError(null);
-
     try {
-      // Small timeout to allow visual feedback for the cryptographic hash computation
-      await new Promise(resolve => setTimeout(resolve, 600));
+      await new Promise(r => setTimeout(r, 700));
       const result = await login(username, password);
-      if (!result.success) {
-        setError(result.error || 'Invalid credentials. Please try again.');
-      }
-    } catch (err) {
-      setError('An unexpected system transaction error occurred.');
-    } finally {
-      setIsSubmitting(false);
-    }
+      if (!result.success) setError(result.error || 'Invalid credentials. Please try again.');
+    } catch { setError('Unexpected error. Please restart the app.'); }
+    finally { setIsSubmitting(false); }
   };
 
-  // Dynamically select shop type icon for premium feel
-  const renderShopIcon = () => {
-    const type = config?.shop_info?.type?.toLowerCase();
-    const style = { color: 'var(--primary, #2563eb)' };
+  const shopType = config?.shop_info?.type?.toLowerCase();
+  const ShopIcon = (shopType === 'pharmacy' || shopType === 'medical') ? Activity : ShoppingCart;
 
-    if (type === 'pharmacy' || type === 'medical') {
-      return <Activity className="w-10 h-10 animate-pulse" style={style} />;
-    }
-    return <ShoppingCart className="w-10 h-10" style={style} />;
-  };
+  /* ── Styles ─────────────────────────────────────────── */
+  const inputStyle = (focused: boolean): React.CSSProperties => ({
+    width: '100%', boxSizing: 'border-box',
+    padding: '13px 14px 13px 44px',
+    fontSize: 14, borderRadius: 12,
+    background: 'hsla(222,47%,4%,0.9)',
+    border: `1px solid ${focused ? 'var(--primary)' : 'hsla(220,30%,25%,0.6)'}`,
+    color: 'var(--text-primary)',
+    outline: 'none',
+    boxShadow: focused ? '0 0 0 4px var(--primary-subtle)' : 'none',
+    transition: 'all 0.2s ease',
+    fontFamily: 'inherit',
+  });
 
   return (
-    <div className="relative flex min-h-screen w-screen items-center justify-center overflow-hidden bg-slate-950 px-4">
-      {/* Dynamic Background Neon Blobs for Rich Visual Aesthetics */}
-      <div className="absolute top-1/4 left-1/4 -z-10 h-96 w-96 rounded-full bg-blue-600/10 blur-[120px] transition-all duration-1000"></div>
-      <div className="absolute bottom-1/4 right-1/4 -z-10 h-96 w-96 rounded-full bg-emerald-600/10 blur-[120px] transition-all duration-1000"></div>
+    /* ── Full Page Wrapper ── */
+    <div style={{
+      position: 'fixed', inset: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'hsl(222, 47%, 5%)',
+      overflow: 'hidden',
+    }}>
 
-      {/* Main Glassmorphic Login Card container */}
+      {/* ── Background Gradient Blobs ── */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        {/* Top-left blob */}
+        <div style={{
+          position: 'absolute', top: '-10%', left: '-5%',
+          width: 500, height: 500, borderRadius: '50%',
+          background: 'radial-gradient(circle, hsla(221,83%,53%,0.22) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          animation: 'blobFloat 8s ease-in-out infinite',
+        }} />
+        {/* Bottom-right blob */}
+        <div style={{
+          position: 'absolute', bottom: '-10%', right: '-5%',
+          width: 460, height: 460, borderRadius: '50%',
+          background: 'radial-gradient(circle, hsla(262,80%,65%,0.18) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          animation: 'blobFloat 8s ease-in-out 3s infinite',
+        }} />
+        {/* Center emerald blob */}
+        <div style={{
+          position: 'absolute', top: '45%', left: '45%',
+          width: 300, height: 300, borderRadius: '50%',
+          background: 'radial-gradient(circle, hsla(158,64%,52%,0.08) 0%, transparent 70%)',
+          filter: 'blur(80px)', transform: 'translate(-50%,-50%)',
+        }} />
+        {/* Grid overlay */}
+        <div style={{
+          position: 'absolute', inset: 0, opacity: 0.03,
+          backgroundImage: 'linear-gradient(hsla(220,30%,70%,1) 1px, transparent 1px), linear-gradient(90deg, hsla(220,30%,70%,1) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }} />
+      </div>
+
+      {/* ── Glass Login Card ── */}
       <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.98 }}
+        initial={{ opacity: 0, y: 30, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-8 shadow-2xl shadow-black/50"
+        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          position: 'relative', zIndex: 10,
+          width: 420, maxWidth: 'calc(100vw - 32px)',
+          background: 'hsla(222, 40%, 8%, 0.75)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid hsla(220,30%,30%,0.4)',
+          borderRadius: 24,
+          boxShadow: '0 32px 80px -12px hsla(222,47%,2%,0.75), 0 0 0 1px hsla(220,30%,30%,0.3)',
+          overflow: 'hidden',
+        }}
       >
-        {/* Brand Header */}
-        <div className="flex flex-col items-center text-center">
-          <motion.div
-            initial={{ scale: 0.8, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
-            className="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-950 border border-slate-800 shadow-inner"
-          >
-            {renderShopIcon()}
-          </motion.div>
+        {/* Top glow bar */}
+        <div style={{
+          height: 2, width: '100%',
+          background: 'linear-gradient(90deg, transparent 0%, var(--primary) 50%, transparent 100%)',
+        }} />
 
-          <motion.h2
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mt-5 text-2xl font-bold tracking-tight text-white"
-          >
-            {config?.shop_info?.name || 'Billing Pro 2026'}
-          </motion.h2>
+        <div style={{ padding: '36px 36px 32px' }}>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-slate-400"
-          >
-            <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--primary, #2563eb)' }} />
-            {config?.shop_info?.type || 'RETAIL TERMINAL'} OPERATOR BOOT
-          </motion.p>
-        </div>
-
-        {/* Dynamic validation error display */}
-        <AnimatePresence mode="wait">
-          {error && (
+          {/* ── Brand ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 32 }}>
+            {/* Icon */}
             <motion.div
-              initial={{ opacity: 0, height: 0, y: -10 }}
-              animate={{ opacity: 1, height: 'auto', y: 0 }}
-              exit={{ opacity: 0, height: 0, y: -10 }}
-              className="mt-6 flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-3.5 text-sm text-red-200"
+              initial={{ scale: 0.6, rotate: -20 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
+              style={{ marginBottom: 18, position: 'relative' }}
             >
-              <ShieldAlert className="w-5 h-5 shrink-0 text-red-400" />
-              <span>{error}</span>
+              <div style={{
+                width: 68, height: 68, borderRadius: 18,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'linear-gradient(135deg, var(--primary-subtle), hsla(262,80%,65%,0.1))',
+                border: '1px solid var(--border-glow)',
+                boxShadow: '0 0 24px -6px var(--primary-glow)',
+              }}>
+                <ShopIcon size={30} color="var(--primary)" />
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* Credentials Form */}
-        <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-          {/* Username Field */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold tracking-wide text-slate-300 uppercase">
-              Operator Username
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
-                <User className="w-4 h-4" />
-              </div>
-              <input
-                ref={usernameRef}
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. admin"
-                disabled={isSubmitting}
-                className="w-full rounded-lg border border-slate-800 bg-slate-950/80 py-3 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none ring-offset-slate-900 transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
-              />
-            </div>
+            {/* Title */}
+            <motion.h1
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              style={{ fontSize: 24, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: 12 }}
+            >
+              {config?.shop_info?.name || 'Billing Pro 2026'}
+            </motion.h1>
+
+            {/* Badges */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em',
+                padding: '4px 10px', borderRadius: 999,
+                background: 'var(--primary-subtle)', color: 'var(--primary)',
+                border: '1px solid hsla(221,83%,53%,0.3)',
+              }}>
+                <Zap size={9} /> {config?.shop_info?.type || 'Retail'} Terminal
+              </span>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em',
+                padding: '4px 10px', borderRadius: 999,
+                background: 'hsla(158,64%,52%,0.1)', color: 'hsl(158,64%,55%)',
+                border: '1px solid hsla(158,64%,52%,0.25)',
+              }}>
+                <WifiOff size={9} /> Offline
+              </span>
+            </motion.div>
           </div>
 
-          {/* Password Field */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-semibold tracking-wide text-slate-300 uppercase">
-                Access Password
-              </label>
-            </div>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
-                <Lock className="w-4 h-4" />
-              </div>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                disabled={isSubmitting}
-                className="w-full rounded-lg border border-slate-800 bg-slate-950/80 py-3 pl-10 pr-12 text-sm text-white placeholder-slate-500 outline-none ring-offset-slate-900 transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={isSubmitting}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-300 transition-colors outline-none"
+          {/* ── Error ── */}
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginBottom: 20 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 12,
+                  padding: '14px 16px', borderRadius: 12,
+                  background: 'hsla(4,86%,58%,0.08)',
+                  border: '1px solid hsla(4,86%,58%,0.25)',
+                  color: 'hsl(4,86%,75%)', fontSize: 13,
+                }}
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+                <ShieldAlert size={17} color="hsl(4,86%,65%)" style={{ flexShrink: 0, marginTop: 1 }} />
+                <span>{error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Form ── */}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+            {/* Username */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'hsla(215,20%,55%,1)', marginBottom: 8 }}>
+                Username
+              </label>
+              <div style={{ position: 'relative' }}>
+                <User size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: userFocused ? 'var(--primary)' : 'hsla(215,15%,40%,1)', transition: 'color 0.2s', pointerEvents: 'none' }} />
+                <input
+                  ref={usernameRef}
+                  type="text"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  onFocus={() => setUserFocused(true)}
+                  onBlur={() => setUserFocused(false)}
+                  placeholder="e.g. admin"
+                  disabled={isSubmitting}
+                  style={{ ...inputStyle(userFocused), paddingRight: 14 }}
+                />
+              </div>
             </div>
+
+            {/* Password */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'hsla(215,20%,55%,1)', marginBottom: 8 }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: passFocused ? 'var(--primary)' : 'hsla(215,15%,40%,1)', transition: 'color 0.2s', pointerEvents: 'none' }} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onFocus={() => setPassFocused(true)}
+                  onBlur={() => setPassFocused(false)}
+                  placeholder="••••••••"
+                  disabled={isSubmitting}
+                  style={{ ...inputStyle(passFocused), paddingRight: 44 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isSubmitting}
+                  style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'hsla(215,15%,40%,1)', display: 'flex', padding: 0 }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'hsla(215,15%,40%,1)')}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={isSubmitting}
+              style={{
+                width: '100%', padding: '15px 24px', marginTop: 4,
+                fontSize: 14, fontWeight: 700, letterSpacing: '0.04em',
+                color: '#fff', borderRadius: 14, border: 'none',
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                opacity: isSubmitting ? 0.7 : 1,
+                background: 'linear-gradient(135deg, var(--primary) 0%, hsl(221,83%,45%) 100%)',
+                boxShadow: '0 4px 20px -4px var(--primary-glow)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                transition: 'opacity 0.2s, box-shadow 0.2s',
+              }}
+            >
+              {isSubmitting ? (
+                <>
+                  <svg style={{ animation: 'spin 1s linear infinite', width: 18, height: 18 }} fill="none" viewBox="0 0 24 24">
+                    <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Verifying Access...
+                </>
+              ) : (
+                <>
+                  <Lock size={15} />
+                  Sign In Securely
+                </>
+              )}
+            </motion.button>
+          </form>
+
+          {/* ── Footer ── */}
+          <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid hsla(220,30%,25%,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'hsl(158,64%,52%)', animation: 'pulse 2s infinite' }} />
+            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'hsla(215,15%,40%,1)' }}>
+              100% Offline · Encrypted Local Storage
+            </p>
           </div>
 
-          {/* Action Submit Button */}
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full mt-2 flex items-center justify-center rounded-lg py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/10 transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 cursor-pointer disabled:opacity-50 select-none uppercase tracking-wider"
-            style={{
-              background: 'linear-gradient(135deg, var(--primary, #2563eb) 0%, rgba(37,99,235,0.85) 100%)',
-            }}
-          >
-            {isSubmitting ? (
-              <div className="flex items-center gap-2">
-                <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Decrypting Hash...</span>
-              </div>
-            ) : (
-              <span>Verify & Boot</span>
-            )}
-          </motion.button>
-        </form>
-
-        {/* Footer Secure Offline Notice */}
-        <div className="mt-6 border-t border-slate-800/80 pt-4 text-center">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
-            🛡️ High Security Sandbox • 100% Local Offline Sync
-          </p>
         </div>
       </motion.div>
     </div>

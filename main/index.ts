@@ -39,6 +39,7 @@ function createWindow() {
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
   if (devServerUrl) {
     mainWindow.loadURL(devServerUrl);
+    mainWindow.webContents.openDevTools(); // Automatically opens DevTools for easy debugging in dev mode
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
@@ -153,4 +154,123 @@ ipcMain.handle('save-sale', (_, payload) => {
   });
 
   return transaction();
+});
+
+ipcMain.handle('get-sales', () => {
+  if (!db) return [];
+  return db.prepare(`
+    SELECT
+      s.id,
+      s.timestamp as date,
+      s.total_amount,
+      s.tax_total,
+      u.username as user,
+      COALESCE(SUM(si.quantity), 0) as items_count
+    FROM sales s
+    JOIN users u ON s.user_id = u.id
+    LEFT JOIN sale_items si ON si.sale_id = s.id
+    GROUP BY s.id, s.timestamp, s.total_amount, s.tax_total, u.username
+    ORDER BY s.timestamp DESC
+  `).all();
+});
+
+// --- EXPENSES DB HANDLERS ---
+ipcMain.handle('get-expenses', () => {
+  if (!db) return [];
+  return db.prepare(`
+    SELECT e.*, u.username as user 
+    FROM expenses e 
+    JOIN users u ON e.user_id = u.id 
+    ORDER BY e.timestamp DESC
+  `).all();
+});
+
+ipcMain.handle('add-expense', (_, { userId, amount, description }) => {
+  if (!db) throw new Error('Database not initialized');
+  const result = db.prepare(
+    'INSERT INTO expenses (user_id, amount, description) VALUES (?, ?, ?)'
+  ).run(userId, amount, description);
+  return result.lastInsertRowid;
+});
+
+ipcMain.handle('delete-expense', (_, id) => {
+  if (!db) throw new Error('Database not initialized');
+  db.prepare('DELETE FROM expenses WHERE id = ?').run(id);
+  return true;
+});
+
+ipcMain.handle('share:whatsapp', (_, { phone, text }) => {
+  const { shell } = require('electron');
+  const formattedPhone = phone.replace(/\D/g, ''); // strip non-digits
+  const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`;
+  shell.openExternal(url);
+  return true;
+});
+
+ipcMain.handle('save:pdf', async (_, { htmlContent, invoiceNo }) => {
+  const { dialog, BrowserWindow } = require('electron');
+  const fs = require('fs');
+
+  const win = BrowserWindow.getFocusedWindow();
+  if (!win) return false;
+
+  const { filePath } = await dialog.showSaveDialog(win, {
+    title: 'Save Invoice PDF',
+    defaultPath: `invoice_${invoiceNo}.pdf`,
+    filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+  });
+
+  if (!filePath) return false;
+
+  // Render the HTML to a hidden window and print to PDF
+  let printWindow: BrowserWindow | null = new BrowserWindow({ show: false });
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            margin: 0;
+            padding: 40px;
+            color: #333;
+            background: white;
+          }
+          @page { size: A4 portrait; margin: 10mm; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .title { font-size: 24px; font-weight: bold; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border-bottom: 1px solid #ddd; padding: 12px; text-align: left; }
+          th { background-color: #f8f9fa; }
+          .right { text-align: right; }
+          .total-row { font-weight: bold; font-size: 16px; }
+        </style>
+      </head>
+      <body>${htmlContent}</body>
+    </html>
+  `;
+
+  printWindow!.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+
+  return new Promise((resolve) => {
+    printWindow!.webContents.on('did-finish-load', async () => {
+      try {
+        const data = await printWindow!.webContents.printToPDF({
+          printBackground: true,
+          margins: { marginType: 'none' }
+        });
+        fs.writeFileSync(filePath, data);
+        printWindow?.close();
+        printWindow = null;
+        resolve(true);
+      } catch (err) {
+        console.error('Failed to save PDF:', err);
+        printWindow?.close();
+        printWindow = null;
+        resolve(false);
+      }
+    });
+  });
 });
