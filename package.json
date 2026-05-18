@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "concurrently -n \"VITE,ELECTRON\" -c \"blue,green\" \"vite --port 5173 --strictPort\" \"wait-on http://localhost:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron main/main.js\"",
     "build": "vite build && tsc -p tsconfig.json && electron-builder",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:ipc": "node test-db.js"
   },
   "keywords": [],
   "author": "",

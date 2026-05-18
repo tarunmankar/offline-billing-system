@@ -156,6 +156,24 @@ ipcMain.handle('save-sale', (_, payload) => {
   return transaction();
 });
 
+ipcMain.handle('get-sales', () => {
+  if (!db) return [];
+  return db.prepare(`
+    SELECT
+      s.id,
+      s.timestamp as date,
+      s.total_amount,
+      s.tax_total,
+      u.username as user,
+      COALESCE(SUM(si.quantity), 0) as items_count
+    FROM sales s
+    JOIN users u ON s.user_id = u.id
+    LEFT JOIN sale_items si ON si.sale_id = s.id
+    GROUP BY s.id, s.timestamp, s.total_amount, s.tax_total, u.username
+    ORDER BY s.timestamp DESC
+  `).all();
+});
+
 // --- EXPENSES DB HANDLERS ---
 ipcMain.handle('get-expenses', () => {
   if (!db) return [];

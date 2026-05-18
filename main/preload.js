@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteProduct: (id) => ipcRenderer.invoke('delete-product', id),
   // Sales
   saveSale: (payload) => ipcRenderer.invoke('save-sale', payload),
+  getSales: () => ipcRenderer.invoke('get-sales'),
   // Printing
   getPrinters: () => ipcRenderer.invoke('get-printers'),
   printReceipt: (payload) => ipcRenderer.invoke('print-receipt', payload),
